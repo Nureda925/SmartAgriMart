@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - SmartAgriMart</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+    /* CSS Tambahan Khusus Dashboard Baru */
+    .dashboard-grid {
+        display: grid; 
+        grid-template-columns: 2fr 1fr; 
+        gap: 20px;
+        margin-top: 20px;
+    }
+    /* Responsif untuk layar kecil (HP) */
+    @media (max-width: 768px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header-top">
+  <div class="header-left">
+    <div class="logo-icon">🌱</div>
+    <div class="logo-text">
+      <h2>SmartAgriMart</h2>
+      <span>Portal Admin</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <a href="#" onclick="showLogoutModal()">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar">
+    <div class="menu">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="data_petani.html">Data Petani</a>
+      <a href="produk_tertunda.html">Produk Tertunda</a>
+      <a href="produk_disetujui.html">Produk Disetujui</a>
+      <a href="pengaturan_akun.html">Pengaturan Akun</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1>Dashboard</h1>
+    <small>Ringkasan aktivitas platform hari ini</small>
+
+    <div id="loadingMessage" style="text-align:center; margin-top: 50px;">
+        <p>Sedang memuat data...</p>
+    </div>
+
+    <div id="dashboardContent" style="display: none;">
+        
+        <div class="cards">
+            <div class="card">
+                <h3>Petani Terdaftar</h3>
+                <strong id="countPetani">0</strong>
+            </div>
+
+            <div class="card">
+                <h3>Produk Tertunda</h3>
+                <strong id="countPending">0</strong>
+            </div>
+
+            <div class="card">
+                <h3>Penjualan 7 Hari</h3>
+                <strong id="totalSales">Rp0</strong>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Transaksi Terakhir</h3>
+                    <span style="font-size:12px; color:#16a34a; background:#e9f4ec; padding:4px 8px; border-radius:4px;">Live Global</span>
+                </div>
+                
+                <table style="width:100%; font-size:13px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align:left; color:#777; border-bottom:1px solid #eee;">
+                            <th style="padding-bottom:10px;">Info Transaksi</th>
+                            <th style="padding-bottom:10px;">Nominal</th>
+                            <th style="padding-bottom:10px; text-align:right;">Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTransaction">
+                        <tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">Memuat transaksi...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                
+                <div class="card" style="background: linear-gradient(135deg, #16a34a 0%, #128c3c 100%); color:white;">
+                    <h3 style="color:white; font-size:16px;">Aksi Cepat</h3>
+                    <p style="color:#dcfce7; margin-bottom:15px; font-size: 13px;">Kelola data dengan satu klik.</p>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <button onclick="window.location.href='data_petani.html'" style="border:none; background:rgba(255,255,255,0.2); color:white; padding:10px; border-radius:8px; cursor:pointer; font-size:13px;">+ Petani</button>
+                        <button onclick="window.location.href='produk_tertunda.html'" style="border:none; background:rgba(255,255,255,0.2); color:white; padding:10px; border-radius:8px; cursor:pointer; font-size:13px;">Cek Produk</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div id="logoutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Konfirmasi Logout</h3>
+    <p>Apakah Anda yakin ingin keluar dari aplikasi?</p>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeLogoutModal()">Batal</button>
+      <button class="btn-confirm" onclick="confirmLogout()">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+// ================== 1. PROTEKSI HALAMAN ==================
+SAMAuth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "login_admin.html";
+        return;
+    }
+
+    // Cek Role Admin
+    const profile = await SAMRoles.getUserProfile(user.uid);
+    let userRole = profile ? String(profile.role).trim().toLowerCase() : '';
+
+    if (userRole !== 'admin') {
+        alert("Akses Ditolak. Anda bukan Admin.");
+        await SAMAuth.signOut();
+        window.location.href = "login_admin.html";
+        return;
+    }
+
+    // Jika Lolos, Tampilkan Dashboard & Load Data
+    document.getElementById("loadingMessage").style.display = 'none';
+    document.getElementById("dashboardContent").style.display = 'block';
+    
+    loadDashboardStats();    // Data Angka Utama
+    loadRealtimeWidgets();   // Data Tabel & Top Petani
+});
+
+// ================== 2. LOGIC LOGOUT ==================
+function showLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+async function confirmLogout() {
+  await SAMAuth.signOut();
+  localStorage.clear();
+  window.location.href = "login_admin.html";
+}
+window.onclick = function(event) {
+  const modal = document.getElementById('logoutModal');
+  if (event.target == modal) closeLogoutModal();
+}
+
+// ================== 3. LOAD STATISTIK UTAMA (ANGKA) ==================
+async function loadDashboardStats() {
+  if (!window.FireBaseApp || !window.FireBaseApp.rtdb) return;
+  const rtdb = window.FireBaseApp.rtdb;
+
+  // A. Hitung Petani
+  rtdb.ref("petani").once("value").then(snap => {
+      let count = 0;
+      if (snap.exists()) count = snap.numChildren();
+      document.getElementById("countPetani").textContent = count;
+  });
+
+  // B. Hitung Produk Pending
+  rtdb.ref("products").once("value").then(snap => {
+      let count = 0;
+      if (snap.exists()) {
+          snap.forEach(child => {
+              const p = child.val();
+              const status = p.status ? String(p.status).toLowerCase() : '';
+              if (status === "pending" || status === "menunggu" || status === "tertunda") {
+                  count++;
+              }
+          });
+      }
+      document.getElementById("countPending").textContent = count;
+  });
+
+  // C. Hitung Penjualan 7 Hari
+  rtdb.ref("orders").once("value").then(snap => {
+      const now = Date.now();
+      const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
+      let totalSales = 0;
+
+      if (snap.exists()) {
+          snap.forEach(child => {
+              const o = child.val();
+              // Jangan hitung penjualan yang batal/ditolak
+              const status = (o.status || "").toLowerCase();
+              if (status.includes('tolak') || status.includes('batal') || status.includes('rejected')) return;
+
+              if (o.timestamp && o.total && o.timestamp >= weekAgo) {
+                  totalSales += Number(o.total);
+              }
+          });
+      }
+      document.getElementById("totalSales").textContent = "Rp" + totalSales.toLocaleString("id-ID");
+  });
+}
+
+// ================== 4. LOAD WIDGET BARU (TABEL TANPA STATUS DITOLAK) ==================
+async function loadRealtimeWidgets() {
+    const rtdb = window.FireBaseApp.rtdb;
+
+    // --- TABEL TRANSAKSI TERAKHIR (GLOBAL) ---
+    const tBody = document.getElementById("liveTransaction");
+    
+    // PERBAIKAN: Ambil 20 data terakhir (lebih banyak dari 5)
+    // agar jika ada yang ditolak, kita masih punya cadangan data untuk ditampilkan
+    const recentOrdersRef = rtdb.ref("orders").limitToLast(20); 
+
+    recentOrdersRef.on("value", (snap) => {
+        if (!snap.exists()) {
+            tBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">Belum ada transaksi di sistem</td></tr>';
+        } else {
+            const ordersArr = [];
+            
+            // Masukkan data snapshot ke array
+            snap.forEach(child => {
+                const data = child.val();
+                const status = (data.status || "").toLowerCase();
+
+                // === FILTER: JANGAN MASUKKAN JIKA DITOLAK ===
+                if (status.includes('tolak') || status.includes('batal') || status.includes('rejected')) {
+                    return; // Skip/Lewati pesanan ini
+                }
+
+                ordersArr.push({ id: child.key, ...data });
+            });
+
+            // Urutkan: Terbaru (Timestamp Besar) ke Terlama
+            ordersArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            // Ambil 5 teratas SETELAH disaring
+            const top5 = ordersArr.slice(0, 5);
+
+            if (top5.length === 0) {
+                 tBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">Belum ada transaksi sukses/pending</td></tr>';
+                 return;
+            }
+
+            tBody.innerHTML = "";
+            
+            top5.forEach(order => {
+                const nominal = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(order.total || 0);
+                
+                // Hitung Waktu
+                const timeAgo = timeSince(new Date(order.timestamp || Date.now()));
+                
+                // Ambil Nama Pembeli (dari order.buyer) atau Toko
+                const namaDisplay = order.buyer || order.email || "Pelanggan"; 
+                const inisial = namaDisplay.charAt(0).toUpperCase();
+
+                // Style Acak Avatar
+                const colors = ['#e0f2fe', '#ffedd5', '#dcfce7', '#f3e8ff'];
+                const textColors = ['#0284c7', '#c2410c', '#16a34a', '#9333ea'];
+                const randIdx = Math.floor(Math.random() * colors.length);
+
+                tBody.innerHTML += `
+                    <tr style="border-bottom:1px solid #f9f9f9;">
+                        <td style="padding:12px 0;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:30px; height:30px; background:${colors[randIdx]}; color:${textColors[randIdx]}; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">${inisial}</div>
+                                <div>
+                                    <span style="font-weight:500; color:#333;">${namaDisplay}</span>
+                                    <br>
+                                    <small style="color:#999; font-size:10px;">ID: ${order.orderId || '-'}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="color:#16a34a; font-weight:600;">${nominal}</td>
+                        <td style="color:#999; font-size:11px; text-align:right;">${timeAgo}</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+}
+
+// Helper: Format Waktu (Time Ago)
+function timeSince(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " thn lalu";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " bln lalu";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " hari lalu";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " jam lalu";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " mnt lalu";
+    return Math.floor(seconds) + " dtk lalu";
+}
+</script>
+
+</body>
+</html>

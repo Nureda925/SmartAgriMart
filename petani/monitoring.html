@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartAgriMart - Monitoring</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="monitoring.css">
+  <style>
+      .connected { color: #28a745; font-weight: bold; }
+      .disconnected { color: #dc3545; font-weight: bold; }
+      .waiting { color: #ffc107; font-weight: bold; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌱</div>
+    <h3>SmartAgriMart</h3>
+  </div>
+  <div class="update-refresh">
+    <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+  </div>
+</header>
+
+<nav>
+  <a href="monitoring.html" class="active">📊 Monitoring</a>
+  <a href="penyiraman.html">💧 Penyiraman</a>
+  <a href="jadwal.html">📅 Jadwal</a>
+  <a href="riwayat.html">🕓 Riwayat</a>
+  <a href="penjualan.html">🛒 Penjualan</a>
+  <a href="pengaturan.html">⚙️ Pengaturan</a>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h3>Suhu Lingkungan</h3>
+    <div class="value" id="tempValue">-- °C</div>
+    <span class="status" id="tempStatus">Menunggu data...</span>
+  </div>
+
+  <div class="card">
+    <h3>Kelembapan Tanah</h3>
+    <div class="value" id="soilValue">--%</div>
+    <span class="status" id="soilStatus">Menunggu data...</span>
+  </div>
+
+  <div class="card">
+    <h3>Level Air Tangki</h3>
+    <div class="value" id="waterValue">--%</div>
+    <div style="background:#ddd;height:10px;border-radius:5px;margin:10px 0;">
+      <div id="waterBar"
+           style="background:#2196f3;width:0%;height:10px;border-radius:5px;transition: width 0.5s;">
+      </div>
+    </div>
+    <span class="status" id="pumpStatus">Pompa: --</span>
+  </div>
+</div>
+
+<div class="row-2">
+  <div class="chart-card">
+    <h3 style="font-size:13px;">Tren Suhu & Kelembapan</h3>
+    <div style="height:300px">
+      <canvas id="chartTrend"></canvas>
+    </div>
+  </div>
+
+  <div class="esp-card">
+    <h3 style="font-size:13px;">Status Perangkat</h3>
+    <div class="esp-status">
+      <div class="esp-header">
+        <span class="wifi-icon">📶</span>
+        <span class="esp-title">Koneksi ESP32</span>
+      </div>
+      <div class="esp-status-row">
+        <span id="espConnection" class="waiting">Menghubungkan...</span>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:#666">
+        Terakhir update:<br>
+        <span id="lastUpdate">-</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+/* ===== FIREBASE CONFIG ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAwM2mZMtBPhsGYlvabfmCzLLhZZdLrpuE",
+  authDomain: "smartagrimart-20670.firebaseapp.com",
+  databaseURL: "https://smartagrimart-20670-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "smartagrimart-20670",
+  storageBucket: "smartagrimart-20670.appspot.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ===== CHART ===== */
+const ctx = document.getElementById("chartTrend").getContext("2d");
+const chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Suhu (°C)",
+        data: [],
+        borderColor: "#ff9800",
+        backgroundColor: "rgba(255,152,0,0.1)",
+        tension: 0.4,
+        fill: true
+      },
+      {
+        label: "Kelembapan Tanah (%)",
+        data: [],
+        borderColor: "#4caf50",
+        backgroundColor: "rgba(76,175,80,0.1)",
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: { y: { beginAtZero: true, max: 100 } }
+  }
+});
+
+/* ===== FIREBASE LISTENER ===== */
+const dataRef = ref(db, "ESP32/data");
+
+onValue(dataRef, (snapshot) => {
+  const espEl = document.getElementById("espConnection");
+
+  if (!snapshot.exists()) {
+    espEl.innerText = "Menunggu data...";
+    espEl.className = "waiting";
+    return;
+  }
+
+  const data = snapshot.val();
+
+  const suhu   = Number(data.temperature ?? 0);
+  const tanah  = Number(data.moisture ?? 0);
+  const pompa  = data.pump === true;
+
+  /* ===== SUHU ===== */
+  document.getElementById("tempValue").innerText = suhu.toFixed(1) + " °C";
+  document.getElementById("tempStatus").innerText =
+    suhu >= 32 ? "Panas" : "Normal";
+
+  /* ===== TANAH ===== */
+  document.getElementById("soilValue").innerText = tanah + "%";
+  let soilMsg = "Normal";
+  if (tanah < 40) soilMsg = "Kering (Perlu Air)";
+  else if (tanah > 80) soilMsg = "Basah";
+  document.getElementById("soilStatus").innerText = soilMsg;
+
+  /* ===== LEVEL AIR (DIPETAKAN DARI MOISTURE) ===== */
+  document.getElementById("waterValue").innerText = tanah + "%";
+  document.getElementById("waterBar").style.width = tanah + "%";
+
+  /* ===== POMPA ===== */
+  const pumpEl = document.getElementById("pumpStatus");
+
+if (pompa) {
+  pumpEl.innerText = "Pompa: ON (Menyiram)";
+  pumpEl.className = "status pump-on";
+} else {
+  pumpEl.innerText = "Pompa: OFF";
+  pumpEl.className = "status pump-off";
+}
+
+  /* ===== GRAFIK ===== */
+  const now = new Date();
+  chart.data.labels.push(now.toLocaleTimeString());
+  chart.data.datasets[0].data.push(suhu);
+  chart.data.datasets[1].data.push(tanah);
+
+  if (chart.data.labels.length > 15) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }
+  chart.update();
+
+  /* ===== STATUS ===== */
+  espEl.innerText = "Terhubung";
+  espEl.className = "connected";
+  document.getElementById("lastUpdate").innerText = now.toLocaleString();
+
+}, () => {
+  document.getElementById("espConnection").innerText = "Error Koneksi";
+  document.getElementById("espConnection").className = "disconnected";
+});
+</script>
+
+</body>
+</html>

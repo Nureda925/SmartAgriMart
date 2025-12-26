@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk Disetujui | SmartAgriMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  
+  <link rel="stylesheet" href="produk_tertunda.css">
+  
+  <style>
+    /* Styling khusus untuk badge status DISETUJUI (Hijau) */
+    .status.approved {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+    /* Styling tombol Batalkan (Kuning/Oranye) */
+    .btn-warning {
+        background-color: #f39c12;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-warning:hover {
+        background-color: #e67e22;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-top">
+    <div class="header-left">
+      <div class="logo-icon">🌱<i class="fas fa-seedling"></i></div>
+      <div class="logo-text">
+        <h2>SmartAgriMart</h2>
+        <span>Portal Admin</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <i class="far fa-bell"></i>
+      <a href="#" onclick="openLogoutPopup()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+        <div class="menu">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="data_petani.html">Data Petani</a>
+            <a href="produk_tertunda.html">Produk Tertunda</a>
+            <a href="produk_disetujui.html" class="active">Produk Disetujui</a>
+            <a href="pengaturan_akun.html">Pengaturan Akun</a>
+        </div>
+    </div>
+
+    <div class="main">
+      <h2>Daftar Produk Disetujui</h2>
+      <p>Produk yang saat ini tayang di halaman pembeli dan halaman admin.</p>
+
+      <div id="produkList" style="display:flex; gap:20px; flex-wrap:wrap;">
+        <p>Memuat data...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="logoutModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Konfirmasi Logout</h3>
+      <p>Apakah Anda yakin ingin keluar dari sistem?</p>
+      <div class="modal-btn-group">
+        <button class="btn-modal btn-cancel" onclick="closeLogoutPopup()">Batal</button>
+        <button class="btn-modal btn-confirm" onclick="confirmLogout()">Ya, Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  
+  <script>
+    // =======================================================
+    // 1. INIT & HELPER
+    // =======================================================
+    function formatRupiah(angka) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    }
+
+    function waitForFirebase() {
+      return new Promise((resolve) => {
+        const check = () => {
+          // PERUBAHAN 1: Cek rtdb, bukan db
+          if (window.FireBaseApp && window.FireBaseApp.auth && window.FireBaseApp.rtdb) {
+            resolve();
+          } else {
+            setTimeout(check, 100);
+          }
+        };
+        check();
+      });
+    }
+
+    // =======================================================
+    // 2. LOAD DATA (STATUS == 'APPROVED') - VERSI REALTIME DB
+    // =======================================================
+    async function loadProdukApproved() {
+        await waitForFirebase();
+
+        const produkList = document.getElementById("produkList");
+        
+        // PERUBAHAN 2: Gunakan sintaks Realtime Database (.ref, .orderByChild, .equalTo)
+        const dbRef = window.FireBaseApp.rtdb.ref('products');
+
+        // Query: Ambil data di folder 'products' yang statusnya 'approved'
+        dbRef.orderByChild('status').equalTo('approved').on('value', (snapshot) => {
+            
+            produkList.innerHTML = '';
+
+            if (!snapshot.exists()) {
+                produkList.innerHTML = `<p style="opacity:0.6; width:100%; padding:20px; text-align:center;">Belum ada produk yang disetujui.</p>`;
+                return;
+            }
+
+            // Konversi Snapshot Object ke Array
+            let items = [];
+            snapshot.forEach((childSnapshot) => {
+                items.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+
+            // Sorting Client-Side (Terbaru di atas)
+            items.sort((a, b) => {
+                const timeA = a.approvedAt || 0;
+                const timeB = b.approvedAt || 0;
+                return timeB - timeA;
+            });
+
+            // Render HTML
+            items.forEach((p) => {
+                // Handle format tanggal
+                const tgl = p.approvedAt ? new Date(p.approvedAt).toLocaleDateString('id-ID') : '-';
+                
+                produkList.innerHTML += `
+                  <div class="product-card">
+                    <img src="${p.gambar || 'sawi.jpg'}" alt="${p.nama}">
+            
+                    <div class="product-info">
+                      <h3>${p.nama} <span class="status approved">Disetujui</span></h3>
+                      <small>Petani: ${p.petaniName || '-'} (${p.farmerId || ''})</small>
+            
+                      <div class="product-details">
+                        <p>Harga : <span class="harga">${formatRupiah(p.harga)}</span></p>
+                        <p>Stok : <span>${p.stok || '-'}</span></p>
+                        <p>Disetujui : <span>${tgl}</span></p>
+                      </div>
+                    </div>
+            
+                    <div class="product-footer">
+                      <button class="btn-warning" onclick="batalkanSetuju('${p.id}')">Batalkan</button>
+                      <button class="btn btn-red" onclick="hapusProduk('${p.id}')">Hapus</button>
+                    </div>
+                  </div>
+                `;
+            });
+
+        }, (error) => {
+            console.error("Error loading data:", error);
+            produkList.innerHTML = `<p style="color:red; text-align:center;">Gagal memuat data: ${error.message}</p>`;
+        });
+    }
+
+    // =======================================================
+    // 3. FUNGSI AKSI (VERSI REALTIME DB)
+    // =======================================================
+    
+    // Fungsi: Mengembalikan produk ke halaman "Produk Tertunda"
+    async function batalkanSetuju(productId) {
+        if(!confirm("Kembalikan produk ini ke status TERTUNDA? Produk akan hilang dari halaman ini.")){ return; }
+
+        try {
+            // PERUBAHAN 3: Update menggunakan rtdb.ref
+            await window.FireBaseApp.rtdb.ref('products/' + productId).update({ 
+                status: 'pending',
+                approvedBy: null,
+                approvedAt: null
+            });
+            // Data akan hilang otomatis dari layar karena listener realtime
+        } catch (err) {
+            alert('Gagal membatalkan: ' + err.message);
+        }
+    }
+
+    // Fungsi: Hapus Permanen
+    async function hapusProduk(productId) {
+        if(!confirm("HAPUS PERMANEN? Data tidak bisa dikembalikan.")){ return; }
+
+        try {
+            // PERUBAHAN 4: Remove menggunakan rtdb.ref
+            await window.FireBaseApp.rtdb.ref('products/' + productId).remove();
+            alert("Produk berhasil dihapus.");
+        } catch (err) {
+            alert('Gagal menghapus: ' + err.message);
+        }
+    }
+
+    // =======================================================
+    // 4. LOGOUT LOGIC
+    // =======================================================
+    function openLogoutPopup() { document.getElementById("logoutModal").style.display = "flex"; }
+    function closeLogoutPopup() { document.getElementById("logoutModal").style.display = "none"; }
+    
+    async function confirmLogout() {
+      if (window.FireBaseApp && window.FireBaseApp.auth) {
+          await window.FireBaseApp.auth.signOut();
+      }
+      window.location.href = 'login_admin.html';
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("logoutModal");
+      if (event.target == modal) modal.style.display = "none";
+    }
+
+    // Jalankan Load Data
+    loadProdukApproved();
+  </script>
+</body>
+</html>

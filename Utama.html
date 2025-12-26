@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartAgriMart - Masuk</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- RESET & GLOBAL --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: #e9f5e9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px; /* Tambahan padding agar tidak mentok di layar HP */
+    }
+
+    /* --- CONTAINER UTAMA --- */
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        background: #fff;
+        border-radius: 20px;
+        display: flex;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        min-height: 600px; /* Tinggi minimum agar proporsional */
+    }
+
+    /* --- BAGIAN KIRI (FORM) --- */
+    .left {
+      width: 50%;
+      padding: 50px;
+      background: #fcfcfc;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center; /* Pusatkan konten secara horizontal */
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px; /* Batasi lebar agar rapi */
+      text-align: left;
+    }
+
+    .login-box h3 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #2d4b2f;
+      font-weight: 700;
+    }
+
+    .login-box p {
+      font-size: 14px;
+      margin-bottom: 30px;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    /* PILIHAN ROLE */
+    .role-select {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+
+    .role-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: 2px solid #e0e0e0; /* Border default */
+      background: white;
+      color: #333;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Icon panah kecil di tombol */
+    .role-btn::after {
+        content: '→';
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: 0.3s;
+    }
+
+    .role-btn:hover {
+      border-color: #28a745;
+      background: #f0fff4;
+      color: #28a745;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(40, 167, 69, 0.1);
+    }
+
+    .role-btn:hover::after {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* --- BAGIAN KANAN (VISUAL) --- */
+    .right {
+      width: 50%;
+      background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); /* Gradient hijau */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 50px;
+      text-align: center;
+      color: white;
+      position: relative;
+    }
+
+    /* Pattern hiasan background (opsional) */
+    .right::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: url('https://www.transparenttextures.com/patterns/cubes.png');
+        opacity: 0.1;
+    }
+
+    .big-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.2);
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .right h1 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .right p {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+      max-width: 80%;
+    }
+
+    /* --- RESPONSIVE (MOBILE) --- */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column-reverse; /* Form di atas, gambar di bawah (atau sebaliknya) */
+        height: auto;
+      }
+
+      .left, .right {
+        width: 100%;
+        padding: 40px 20px;
+      }
+
+      .right {
+        padding: 60px 20px;
+      }
+      
+      .right h1 { font-size: 24px; }
+      .big-icon { width: 100px; height: 100px; font-size: 50px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="left">
+    <div class="login-box">
+      <h3>Selamat Datang! 👋</h3>
+      <p>Silakan pilih peran Anda untuk masuk atau mendaftar ke dalam SmartAgriMart.</p>
+
+      <div class="role-select">
+        <button class="role-btn" onclick="goTo('petani')">
+           Masuk sebagai Petani
+        </button>
+
+        <button class="role-btn" onclick="goTo('konsumen')">
+           Masuk sebagai Konsumen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="big-icon">🌱</div>
+    <h1>Pertanian Masa Depan</h1>
+    <p>Menghubungkan hasil panen terbaik langsung dari lahan ke meja makan Anda dengan teknologi pintar.</p>
+  </div>
+
+</div>
+
+<script>
+    // Fungsi Navigasi Sederhana
+    function goTo(role) {
+        if (role === 'petani') {
+            // Arahkan ke halaman login petani
+            console.log("Redirecting to Petani Login...");
+            window.location.href = 'petani/login.html'; 
+        } else {
+            // Arahkan ke halaman daftar/login pembeli
+            console.log("Redirecting to Konsumen Dashboard...");
+            window.location.href = 'pembeli/daftar.html'; 
+        }
+    }
+</script>
+
+</body>
+</html>

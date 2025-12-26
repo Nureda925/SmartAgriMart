@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produk | SmartAgriMart</title>
+<link rel="stylesheet" href="produk.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo-container">
+    <div class="logo-box">🌱
+    </div>
+    <span class="logo-text">SmartAgriMart</span>
+  </div>
+
+  <ul>
+    <li><a href="home.html">Home</a></li>
+    <li><a href="produk.html" class="active">Produk</a></li>
+    <li><a href="profile.html">Profil</a></li>
+  </ul>
+
+  <div class="icons">
+    <a href="keranjang.html">
+      🛒 <span id="cart-count" class="cart-badge">0</span>
+    </a>
+    <a href="profile.html">👤</a>
+  </div>
+</nav>
+
+<!-- ✅ HEADER -->
+<section class="header-section">
+  <h1>Produk Segar Kami</h1>
+  <p>Lihat koleksi sayuran mustard segar berkualitas premium kami.</p>
+</section>
+
+<!-- ✅ FILTER -->
+<div class="filter-box">
+  <input type="text" id="searchInput" placeholder="🔍 Cari Produk...">
+  <select>
+    <option>Semua kategori</option>
+    <option>Sawi</option>
+    <option>Mustard</option>
+  </select>
+  <select>
+    <option>Nama</option>
+    <option>Harga</option>
+    <option>Stok</option>
+  </select>
+</div>
+
+<!-- ✅ PRODUK GRID -->
+<div class="product-grid" id="produkContainer"></div>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+// ==================== AMBIL PRODUK DARI ADMIN ====================
+
+// Ambil semua produk petani dari localStorage
+let produk = []; // Will be filled from Firestore or localStorage fallback
+
+// Wait for Firebase to be ready
+function waitForFirebase() {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (window.FireBaseApp && window.FireBaseApp.auth && window.FireBaseApp.db) {
+        resolve();
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+// If Firestore is configured, load approved products
+async function loadProducts() {
+  await waitForFirebase();
+
+  const db = window.FireBaseApp && window.FireBaseApp.db ? window.FireBaseApp.db : null;
+  if (!db) {
+    // Fallback to localStorage
+    let semuaProduk = JSON.parse(localStorage.getItem("produkPetani")) || [];
+    let produkApproved = semuaProduk.filter(p => p.status === "approved");
+    produk = produkApproved.map(p => ({ nama: p.nama, deskripsi: p.deskripsi || "Produk segar dari petani.", harga: `Rp${parseInt(p.harga).toLocaleString()} / Kg`, stok: p.jumlah, gambar: p.gambar }));
+    renderProduk();
+    return;
+  }
+
+  window.FireBaseApp.db.collection('products').where('status','==','approved')
+    .onSnapshot(snapshot => {
+      produk = snapshot.docs.map(d => ({ id: d.id, ...d.data(), harga: `Rp${parseInt(d.data().harga || 0).toLocaleString()} / Kg` }));
+      renderProduk();
+    });
+}
+
+loadProducts();
+
+
+// ==================== RENDER PRODUK ====================
+function renderProduk() {
+  const container = document.getElementById("produkContainer");
+
+  if (produk.length === 0) {
+    container.innerHTML = `<p>Tidak ada produk tersedia saat ini.</p>`;
+    return;
+  }
+
+  let html = "";
+  produk.forEach(p => {
+    html += `
+      <div class="card">
+        <img src="${p.gambar}" alt="${p.nama}">
+        <div class="card-content">
+          <h3>${p.nama}</h3>
+          <p>${p.deskripsi}</p>
+          <p class="price">${p.harga}</p>
+          <button class="btn-keranjang pesan-btn"
+            data-name="${p.nama}"
+            data-price="${p.harga.replace(/[^\d]/g, '')}"
+            data-img="${p.gambar}"
+            data-id="${p.id || ''}">
+            Tambah ke keranjang
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  attachOrderButtons();
+}
+
+// renderProduk(); // Removed, as it's called in loadProducts
+
+
+// ==================== KERANJANG ====================
+function updateCartBadge() {
+  const badge = document.getElementById("cart-count");
+  const pesanan = JSON.parse(localStorage.getItem("pesanan")) || [];
+  const totalQty = pesanan.reduce((total, item) => total + item.jumlah, 0);
+
+  if (totalQty > 0) {
+    badge.textContent = totalQty;
+    badge.style.display = "inline-block";
+  } else {
+    badge.style.display = "none";
+  }
+}
+updateCartBadge();
+
+function attachOrderButtons() {
+  document.querySelectorAll(".pesan-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      let pesanan = JSON.parse(localStorage.getItem("pesanan")) || [];
+      const namaProduk = this.dataset.name;
+      const hargaProduk = `Rp${parseInt(this.dataset.price).toLocaleString()}`;
+      const gambarProduk = this.dataset.img;
+      const productId = this.dataset.id;
+
+      const existing = pesanan.find(p => p.nama === namaProduk);
+      if (existing) {
+        existing.jumlah += 1;
+      } else {
+        pesanan.push({
+          nama: namaProduk,
+          harga: hargaProduk,
+          gambar: gambarProduk,
+          jumlah: 1,
+          tanggal: new Date().toLocaleString(),
+          id: productId
+        });
+      }
+
+      localStorage.setItem("pesanan", JSON.stringify(pesanan));
+      updateCartBadge();
+      alert("✅ Produk berhasil ditambahkan ke keranjang!");
+    });
+  });
+}
+
+
+// ==================== SEARCH ====================
+document.getElementById("searchInput").addEventListener("keyup", function () {
+  let keyword = this.value.toLowerCase();
+  document.querySelectorAll(".card").forEach(card => {
+    card.style.display = card.innerText.toLowerCase().includes(keyword) ? "block" : "none";
+  });
+});
+</script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="produk.js"></script>
+</body>
+</html>

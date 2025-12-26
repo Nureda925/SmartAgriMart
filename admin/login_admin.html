@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartAgriMart - Portal Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="login_admin.css">
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="login-box">
+        <h3>Selamat Datang</h3>
+        <p>Masukkan kredensial Anda untuk mengakses dasbor admin</p>
+
+        <div class="input-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="Masukkan email Anda" required>
+        </div>
+
+        <div class="input-group">
+          <label>Kata Sandi</label>
+          <input type="password" id="password" placeholder="Masukkan kata sandi" required>
+        </div>
+
+        <div class="remember">
+          <input type="checkbox" id="remember">
+          <label for="remember">Ingat Saya</label>
+        </div>
+
+        <button class="btn" onclick="login()">Masuk</button>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="icon">🌱</div>
+      <h2>Memperkuat Pertanian Segar</h2>
+      <p>Mengelola petani, menyetujui produk berkualitas, dan menghubungkan hasil pertanian segar dengan pembeli di seluruh wilayah.</p>
+      <div class="stats">
+        <div><strong>0</strong> Petani</div>
+        <div><strong>0</strong> Produk</div>
+        <div><strong>100%</strong> Kualitas</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    // Restore saved email
+    window.onload = function() {
+      const savedEmail = localStorage.getItem("savedEmail");
+      if (savedEmail) {
+        document.getElementById("email").value = savedEmail;
+        document.getElementById("remember").checked = true;
+      }
+
+      // Listen to auth state
+      SAMAuth.onAuthStateChanged((user) => {
+        if (user) {
+          // If already logged in and role is admin, redirect
+          SAMRoles.getUserProfile(user.uid).then(profile => {
+            if (profile && profile.role === 'admin') {
+              window.location.href = 'dashboard.html';
+            }
+          });
+        }
+      });
+    };
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const remember = document.getElementById("remember").checked;
+
+      if (!email || !password) {
+        alert("Silakan isi email dan kata sandi.");
+        return;
+      }
+
+      try {
+        const res = await SAMAuth.signInWithEmail(email, password);
+        const uid = res.user.uid;
+        const profile = await SAMRoles.getUserProfile(uid);
+
+        // --- PERBAIKAN: Debugging & Pembersihan Data ---
+        console.log("Data Mentah dari DB:", profile); // Cek isi profile
+        
+        // 1. Ambil role (jika kosong, anggap string kosong)
+        let userRole = profile ? profile.role : '';
+        
+        // 2. Bersihkan spasi di depan/belakang dan ubah ke huruf kecil semua
+        userRole = String(userRole).trim().toLowerCase();
+        
+        console.log("Role setelah dibersihkan: '" + userRole + "'"); // Cek apakah ada spasi
+        // ------------------------------------------------
+
+        // Cek apakah userRole bukan 'admin'
+        if (!profile || userRole !== 'admin') {
+          console.error("Gagal Login. Role yang terbaca:", userRole);
+          await SAMAuth.signOut();
+          alert('Akses ditolak: Role akun Anda adalah "' + userRole + '", bukan "admin".');
+          return;
+        }
+
+        if (remember) localStorage.setItem("savedEmail", email);
+        else localStorage.removeItem("savedEmail");
+
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        alert('Gagal masuk: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

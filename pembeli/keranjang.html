@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Belanja | SmartAgriMart</title>
+    <link rel="stylesheet" href="keranjang.css">
+</head>
+<body>
+
+<nav>
+  <div class="logo-container">
+    <div class="logo-box">🌱</div>
+    <span class="logo-text">SmartAgriMart</span>
+  </div>
+
+  <ul>
+    <li><a href="home.html">Home</a></li>
+    <li><a href="produk.html">Produk</a></li>
+    <li><a href="profile.html">Profil</a></li>
+  </ul>
+
+  <div class="icons">
+    <a href="keranjang.html" class="active">
+      🛒 <span id="cart-count" class="cart-badge">0</span>
+    </a>
+    <a href="profile.html">👤</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div id="cart-content">
+      <div style="text-align:center; padding:50px; color:#888;">
+          <p>Memuat data keranjang...</p>
+      </div>
+  </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="keranjang.js"></script>
+
+</body>
+</html>

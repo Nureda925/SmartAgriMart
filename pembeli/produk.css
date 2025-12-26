@@ -1,0 +1,333 @@
+/* === RESET & BASE === */
+* {
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background-color: #f4faf4;
+  color: #222;
+}
+
+/* NAVBAR (HEADER)*/
+nav {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  padding: 14px 45px;
+  border-bottom: 2px solid #DCEEDD;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* === LOGO SmartAgriMart === */
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #000;
+}
+
+.logo span {
+  color: #2ECC71;
+}
+
+/* === MENU NAV === */
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 28px;
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+nav ul li a.active,
+nav ul li a:hover {
+  background-color: #22c55e;
+  color: white !important;
+}
+
+/* ==========================
+   ICONS (Keranjang, Profil)
+   ========================== */
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 22px;
+}
+
+.icons a {
+  color: #333;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icons a:hover {
+  color: #22c55e;
+}
+
+/* ikon keranjang */
+.cart-icon {
+  position: relative;
+  font-size: 22px;
+  color: #333;
+}
+
+/* badge merah */
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 5px;
+  min-width: 17px;
+  text-align: center;
+  display: none;
+}
+
+/* ==========================
+   HEADER SECTION
+   ========================== */
+.header-section {
+  background: #d5f4d7;
+  padding: 40px 60px;
+  border-bottom: 2px solid #c5eac8;
+}
+
+.header-section h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.header-section p {
+  color: #555;
+  font-size: 15px;
+}
+
+/* ==========================
+   SEARCH FILTER
+   ========================== */
+.filter-box {
+  padding: 25px 60px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-box input,
+.filter-box select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1.5px solid #C9C9C9;
+  outline: none;
+  width: 260px;
+  font-size: 14px;
+}
+
+.filter-box input:focus,
+.filter-box select:focus {
+  border-color: #22c55e;
+}
+
+/* ==========================
+   PRODUCT GRID
+   ========================== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 🔥 3 kolom ke samping */
+  gap: 25px;
+  padding: 40px 60px;
+  margin-left: auto;  /* 👉 konten ke kanan */
+}
+
+
+/* === CARD PRODUCT === */
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  transition: 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* === GAMBAR PRODUK === */
+.card img {
+  width: 100%;
+  height: 220px;      /* sesuaikan tinggi */
+  object-fit: cover;  /* tidak gepeng */
+}
+
+/* === CONTENT === */
+.card-content {
+  padding: 18px 22px;
+}
+
+.card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.card p {
+  font-size: 14px;
+  color: #555;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 18px;
+  color: #22c55e;
+  margin: 10px 0;
+}
+
+/* === BUTTON TAMBAH KE KERANJANG === */
+.btn-keranjang {
+  width: 100%;
+  padding: 9px;
+  background: #22c55e;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s;
+  font-weight: 500;
+}
+
+.btn-keranjang:hover {
+  background: #1ea652;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 kolom */
+    padding: 30px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .product-grid {
+    grid-template-columns: 1fr; /* 1 kolom */
+    padding: 20px;
+  }
+}
+
+/* ===== LOGO CONTAINER ===== */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Kotak hijau seperti gambar */
+.logo-box {
+  width: 45px;
+  height: 45px;
+  background: #2ecc71;            /* warna hijau gambar */
+  border-radius: 12px;            /* sudut membulat */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;                /* ukuran emoji */
+  color: #fff;
+}
+
+/* Tulisan */
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d2d2d;
+}
+
+/* --- EMPTY STATE (Produk Kosong) --- */
+/* =========================================
+   EMPTY STATE (Tampilan Produk Kosong - Ukuran Besar)
+   ========================================= */
+
+.container-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh; /* Menggunakan 60% tinggi layar agar posisinya pas di tengah */
+  width: 100%;
+  padding: 20px;
+}
+
+.empty-state {
+  text-align: center;
+  background: white;
+  padding: 60px 40px; /* Padding diperbesar agar kotak lebih luas */
+  border-radius: 24px; /* Sudut lebih membulat */
+  box-shadow: 0 20px 50px rgba(0,0,0,0.08); /* Bayangan lebih soft dan luas */
+  max-width: 1000px; /* Lebar maksimal ditambah (sebelumnya 400px) */
+  width: 100%;
+  margin: 0 auto;
+  border: 1px solid #f1f5f9;
+}
+
+.empty-icon {
+  font-size: 60px; /* Ukuran emoji diperbesar */
+  background: #f0fdf4;
+  width: 130px;  /* Lebar lingkaran diperbesar */
+  height: 130px; /* Tinggi lingkaran diperbesar */
+  line-height: 130px; /* Agar emoji tepat di tengah vertikal */
+  border-radius: 50%;
+  margin: 0 auto 20px; /* Jarak ke bawah diperlebar */
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.2);
+  display: block;
+}
+
+.empty-state h3 {
+  font-size: 24px; /* Judul jauh lebih besar */
+  color: #1e293b;
+  margin-bottom: 15px;
+  font-weight: 700; /* Font lebih tebal */
+  letter-spacing: -0.5px;
+}
+
+.empty-state p {
+  color: #64748b;
+  font-size: 16px; /* Teks deskripsi lebih besar dan mudah dibaca */
+  margin-bottom: 40px;
+  line-height: 1.6;
+  max-width: 80%; /* Agar teks tidak terlalu melebar ke samping */
+  margin-left: auto;
+  margin-right: auto;
+}

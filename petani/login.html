@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Petani - SmartAgriMart</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="login-container">
+  <div class="logo">
+    <div class="logo-icon">🌱</div>
+    <h2>SmartAgriMart</h2>
+  </div>
+
+  <h1>Selamat Datang</h1>
+  <p>Masuk sebagai Petani</p>
+
+  <form id="loginForm">
+    <label>Nama Petani</label>
+    <input type="text" id="nama" placeholder="Masukkan nama petani" required>
+
+    <label>Kata Sandi (ID Petani)</label>
+    <input type="password" id="password" placeholder="Masukkan ID Petani" required>
+
+    <button type="submit">Masuk</button>
+  </form>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const namaInput = document.getElementById("nama").value.trim().toLowerCase();
+  const passwordInput = document.getElementById("password").value.trim();
+
+  try {
+    const snapshot = await FireBaseApp.rtdb.ref("petani").once("value");
+
+    if (!snapshot.exists()) {
+      alert("Data petani belum tersedia");
+      return;
+    }
+
+    let petaniLogin = null;
+
+    snapshot.forEach(child => {
+      const p = child.val();
+
+      if (
+        p.nama &&
+        p.id_petani &&
+        p.nama.toLowerCase() === namaInput &&
+        String(p.id_petani) === String(passwordInput)
+      ) {
+        petaniLogin = p;
+      }
+    });
+
+    if (!petaniLogin) {
+      alert("Nama atau ID Petani salah");
+      return;
+    }
+
+    if (petaniLogin.status !== "Active") {
+      alert("Akun petani tidak aktif. Hubungi admin.");
+      return;
+    }
+
+    // === SIMPAN SESSION PETANI ===
+    localStorage.setItem("isPetani", "true");
+    localStorage.setItem("petaniId", petaniLogin.id_petani);
+    localStorage.setItem("petaniNama", petaniLogin.nama);
+
+    // === REDIRECT ===
+    window.location.href = "monitoring.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat login");
+  }
+});
+</script>
+
+</body>
+</html>

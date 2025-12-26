@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk Tertunda | SmartAgriMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="produk_tertunda.css">
+</head>
+<body>
+
+  <div class="header-top">
+    <div class="header-left">
+      <div class="logo-icon">🌱<i class="fas fa-seedling"></i></div>
+      <div class="logo-text">
+        <h2>SmartAgriMart</h2>
+        <span>Portal Admin</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <i class="far fa-bell"></i>
+      <a href="#" onclick="openLogoutPopup()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+    <div class="container">
+    <div class="sidebar">
+        <div class="menu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="data_petani.html">Data Petani</a>
+        <a href="produk_tertunda.html"class="active">Produk Tertunda</a>
+        <a href="produk_disetujui.html">Produk Disetujui</a>
+        <a href="pengaturan_akun.html">Pengaturan Akun</a>
+        </div>
+    </div>
+
+    <div class="main">
+      <h2>Produk yang Belum Disetujui</h2>
+      <p>Review dan setujui produk yang diajukan oleh petani.</p>
+
+      <div id="produkList" style="display:flex; gap:20px; flex-wrap:wrap;">
+        <p>Memuat data...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="logoutModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Konfirmasi Logout</h3>
+      <p>Apakah Anda yakin ingin keluar dari sistem?</p>
+      <div class="modal-btn-group">
+        <button class="btn-modal btn-cancel" onclick="closeLogoutPopup()">Batal</button>
+        <button class="btn-modal btn-confirm" onclick="confirmLogout()">Ya, Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+// =======================================================
+// MENGGUNAKAN FIRESTORE UNTUK MENAMPILKAN PRODUK PENDING
+// =======================================================
+let produkPending = [];
+
+function renderProdukList(items) {
+    const produkList = document.getElementById("produkList");
+
+    if (!items || items.length === 0) {
+        produkList.innerHTML = `<p style="opacity:0.6; width:100%;">Tidak ada produk tertunda.</p>`;
+        return;
+    }
+
+    produkList.innerHTML = '';
+
+    items.forEach((p) => {
+        produkList.innerHTML += `
+          <div class="product-card">
+            <img src="${p.gambar || 'sawi.jpg'}" alt="${p.nama}">
+    
+            <div class="product-info">
+              <h3>${p.nama} <span class="status">Tertunda</span></h3>
+              <small>Dari ${p.petaniName || 'Petani'} (${p.farmerId || '-'})</small>
+    
+              <div class="product-details">
+                <p>Harga : <span class="harga">${p.harga}</span></p>
+                <p>Jumlah : <span>${p.stok || '-'}</span></p>
+                <p>Dikirim : <span>${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : '-'}</span></p>
+              </div>
+            </div>
+    
+            <div class="product-footer">
+              <button class="btn btn-green" onclick="setujui('${p.id}')">Setujui</button>
+              <button class="btn btn-red" onclick="tolak('${p.id}')">Tolak</button>
+            </div>
+          </div>
+        `;
+    });
+}
+
+// =======================================================
+// SETUJUI PRODUK
+// =======================================================
+async function setujui(productId) {
+    if (!window.FireBaseApp || !window.FireBaseApp.db) {
+        alert('Firestore belum dikonfigurasi.');
+        return;
+    }
+
+    try {
+        const uid = window.FireBaseApp.auth.currentUser.uid;
+        await window.FireBaseApp.db.collection('products').doc(productId).update({ status: 'approved', approvedBy: uid, approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        alert('✔ Produk telah disetujui!');
+    } catch (err) {
+        console.error(err);
+        alert('Gagal menyetujui produk.');
+    }
+}
+
+// =======================================================
+// TOLAK PRODUK
+// =======================================================
+async function tolak(productId) {
+    if (!window.FireBaseApp || !window.FireBaseApp.db) {
+        alert('Firestore belum dikonfigurasi.');
+        return;
+    }
+
+    try {
+        await window.FireBaseApp.db.collection('products').doc(productId).update({ status: 'rejected', notification: 'Produk anda ditolak oleh admin.' });
+        alert('❌ Produk ditolak');
+    } catch (err) {
+        console.error(err);
+        alert('Gagal menolak produk.');
+    }
+}
+
+// =======================================================
+// JALANKAN LOAD DATA
+// =======================================================
+function waitForFirebase() {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (window.FireBaseApp && window.FireBaseApp.auth && window.FireBaseApp.db) {
+        resolve();
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+async function loadProdukPending() {
+    await waitForFirebase();
+
+    if (!window.FireBaseApp || !window.FireBaseApp.db) { 
+        console.log('Firestore not available');
+        renderProdukList([]); 
+        return; 
+    }
+
+    console.log('Loading produk pending...');
+    window.FireBaseApp.db.collection('products').where('status', '==', 'pending')
+        .onSnapshot(snapshot => {
+            produkPending = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderProdukList(produkPending);
+        }, error => {
+            console.error('Error loading produk:', error);
+        });
+}
+
+loadProdukPending();
+
+// =======================================================
+// LOGIKA POPUP LOGOUT (TERBARU)
+// =======================================================
+
+// 1. Fungsi Buka Popup
+function openLogoutPopup() {
+  document.getElementById("logoutModal").style.display = "flex";
+}
+
+// 2. Fungsi Tutup Popup
+function closeLogoutPopup() {
+  document.getElementById("logoutModal").style.display = "none";
+}
+
+// 3. Fungsi Eksekusi Logout (Dijalankan saat klik "Ya, Logout")
+async function confirmLogout() {
+  try {
+    if (window.FireBaseApp && window.FireBaseApp.auth) {
+        await SAMAuth.signOut(); // Pastikan SAMAuth atau auth firebase Anda benar
+    }
+    // Redirect ke login
+    window.location.href = 'login_admin.html';
+  } catch (err) { 
+    console.error("Logout Error:", err);
+    alert("Gagal logout. Silakan coba lagi.");
+  }
+}
+
+// Tutup popup jika user klik di area gelap (luar kotak putih)
+window.onclick = function(event) {
+  const modal = document.getElementById("logoutModal");
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="produk_tertunda.js"></script> </body>
+</html>
+</body>
+</html>

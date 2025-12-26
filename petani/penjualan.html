@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartAgriMart - Penjualan</title>
+    <link rel="stylesheet" href="penjualan.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🌱</div>
+            <h3>SmartAgriMart</h3>
+        </div>
+        <div class="update-refresh">
+            <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+        </div>
+    </header>
+
+    <nav>
+        <a href="monitoring.html">📊 Monitoring</a>
+        <a href="penyiraman.html">💧 Penyiraman</a>
+        <a href="jadwal.html">📅 Jadwal</a>
+        <a href="riwayat.html" >🕓 Riwayat</a>
+        <a href="penjualan.html" class="active">🛒 Penjualan</a>
+        <a href="pengaturan.html">⚙️ Pengaturan</a>
+    </nav>
+
+    <div class="container">
+        <div class="tab-menu">
+            <div class="tab active" id="produkTab">📦 Produk</div>
+            <div class="tab" id="pesananTab">🛍️ Pesanan</div>
+        </div>
+
+        <div id="produkContent">
+            <div class="section-header">
+                <h2>Manajemen Produk</h2>
+                <button class="add-btn" onclick="tambahProduk()">+ Tambah Produk</button>
+            </div>
+            <div id="produkList"></div>
+            </div>
+
+        <div id="pesananContent" style="display: none;"> 
+            <div class="section-header">
+                <h2>Manajemen Pesanan</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Pesanan</th>
+                            <th>Pembeli</th>
+                            <th>Total</th>
+                            <th>Tanggal</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="popup-overlay" id="popupTambah">
+            <div class="popup-box">
+                <h3>Tambah Produk</h3>
+                <label class="upload-box" for="gambarProduk">
+                    <input type="file" id="gambarProduk" accept="image/*" hidden>
+                    <img id="previewGambar" src="https://cdn-icons-png.flaticon.com/512/685/685686.png" alt="Upload">
+                    <p>Tambahkan gambar produk</p>
+                </label>
+                <input type="text" id="namaProduk" placeholder="Tambahkan Judul">
+                <textarea id="deskripsiProduk" placeholder="Tambahkan deskripsi produk"></textarea>
+                <div class="input-row">
+                    <input type="text" id="hargaProduk" placeholder="Tambahkan harga">
+                    <input type="number" id="stokProduk" placeholder="Tambahkan stok" min="0">
+                </div>
+                <button id="btnTambahProduk">Tambah</button>
+                <button id="btnBatal" class="cancel">Batal</button>
+            </div>
+        </div>
+        <div class="popup-overlay" id="popupEdit">
+            <div class="popup-box">
+                <div class="edit-header">
+                    <h3>Edit Produk</h3>
+                </div>
+                <label class="upload-box" for="editGambar">
+                    <input type="file" id="editGambar" accept="image/*" hidden>
+                    <img id="previewEditGambar" src="https://cdn-icons-png.flaticon.com/512/685/685686.png" alt="Upload">
+                    <p>Ubah gambar produk</p>
+                </label>
+                <input type="text" id="editNama" placeholder="Judul">
+                <textarea id="editDeskripsi" placeholder="Deskripsi produk"></textarea>
+                <div class="input-row">
+                    <input type="text" id="editHarga" placeholder="Harga">
+                    <input type="number" id="editStok" placeholder="Stok" min="0">
+                </div>
+                <button id="btnSimpanEdit">Simpan</button>
+                <button id="btnBatalEdit">Batal</button>
+            </div>
+        </div>
+        <div class="popup-overlay" id="popupHapus">
+            <div class="popup-box confirm-box">
+                <p>Apakah anda yakin ingin menghapus produk ini?</p>
+                <div class="confirm-buttons">
+                    <button id="btnYaHapus">Ya</button>
+                    <button id="btnTidakHapus">Tidak</button>
+                </div>
+            </div>
+        </div>
+        <div class="popup-overlay" id="popupDetail">
+            <div class="popup-box pesanan-detail-box">
+                <h3 class="detail-title">Detail Pesanan</h3>
+
+                <div class="detail-info">
+                    <div><span>ID Pesanan</span><strong id="p_id"></strong></div>
+                    <div><span>Pembeli</span><strong id="p_buyer"></strong></div>
+                    <div><span>Email</span><strong id="p_email"></strong></div>
+                    <div><span>Tanggal Pesan</span><strong id="p_date"></strong></div>
+                </div>
+
+                <div class="detail-status">
+                    <span>Status</span>
+                    <span id="p_status" class="status-badge"></span>
+                </div>
+
+                <div class="detail-total">
+                    <span>Total Harga</span>
+                    <strong id="p_total"></strong>
+                </div>
+
+                <div class="detail-items">
+                    <h4>Daftar Item</h4>
+                    <ul id="p_items" class="item-list"></ul>
+                </div>
+
+                <button class="btn-close" onclick="tutupPopup()">Tutup</button>
+            </div>
+        </div>
+
+        <div class="popup-overlay" id="popupDetailPesanan" style="display: none;">
+            <div class="popup-box pesanan-detail-box">
+                <h3>Detail Pesanan</h3>
+                <div id="detailPesananContent"></div>
+                <p><strong>Jumlah Item:</strong></p>
+                <ul id="p_items_old_placeholder"></ul> <button id="btnTutupDetail">Tutup</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="penjualan.js"></script>
+</body>
+</html>

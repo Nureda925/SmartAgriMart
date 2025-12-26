@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Pembeli - SmartAgriMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login_konsumen.css">
+</head>
+<body>
+
+<div class="login-container">
+    
+    <div class="logo-box">
+        <span class="logo-emoji">🌱</span>
+    </div>
+    <h2>Selamat Datang Kembali</h2>
+    <p>Silakan login untuk mulai berbelanja</p>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="Contoh: eda@gmail.com">
+    </div>
+
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Masukkan password">
+    </div>
+
+    <button id="btnLogin">Masuk Sekarang</button>
+
+    <div class="links">
+        Belum punya akun? <a href="daftar.html">Daftar disini</a>
+    </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnLogin = document.getElementById("btnLogin");
+        const emailInput = document.getElementById("email");
+        const passInput = document.getElementById("password");
+
+        btnLogin.addEventListener("click", async () => {
+            const email = emailInput.value;
+            const password = passInput.value;
+
+            if (!email || !password) {
+                alert("Mohon isi Email dan Password!");
+                return;
+            }
+
+            btnLogin.innerText = "Memproses...";
+            btnLogin.disabled = true;
+
+            try {
+                // 1. Login ke Firebase Auth (Cek Password)
+                const userCredential = await window.FireBaseApp.auth.signInWithEmailAndPassword(email, password);
+                console.log("✅ Auth Berhasil, sedang mengambil data profil...");
+
+                // 2. AMBIL DATA DARI DATABASE
+                const db = window.FireBaseApp.rtdb;
+                // Cari user di tabel 'pembeli' yang emailnya sama
+                const snapshot = await db.ref('pembeli').orderByChild('email').equalTo(email).once('value');
+
+                if (snapshot.exists()) {
+                    // Data ditemukan!
+                    const data = snapshot.val();
+                    const key = Object.keys(data)[0]; // Mengambil Key Unik (contoh: PMB_176...)
+                    const userData = data[key];       // Mengambil Data Lengkap (Nama, HP, dll)
+
+                    // 3. SIMPAN KE LOCALSTORAGE (WAJIB AGAR KERANJANG BERFUNGSI)
+                    localStorage.setItem("pembeliKey", key);   // <-- INI KUNCI UTAMANYA
+                    localStorage.setItem("pembeliData", JSON.stringify(userData));
+
+                    console.log("✅ Login Sempurna! Key:", key);
+                    
+                    alert("Login Berhasil!");
+                    window.location.href = "home.html"; // Atau ganti ke produk.html jika perlu
+                } else {
+                    // Kasus langka: Akun ada di Auth, tapi data profil hilang di Database
+                    console.error("Data profil tidak ditemukan di database realtime.");
+                    alert("Akun ditemukan, tapi data profil database kosong. Hubungi admin.");
+                    
+                    // (Opsional) Tetap login tapi mungkin error saat belanja
+                    localStorage.setItem("userEmail", email);
+                    window.location.href = "home.html";
+                }
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                btnLogin.innerText = "Masuk Sekarang";
+                btnLogin.disabled = false;
+
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    alert("Email atau Password salah!");
+                } else if (error.code === 'auth/invalid-email') {
+                    alert("Format email tidak valid!");
+                } else {
+                    alert("Gagal Login: " + error.message);
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

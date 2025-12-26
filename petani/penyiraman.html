@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Penyiraman - SmartAgriMart</title>
+  <link rel="stylesheet" href="penyiraman.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌱</div>
+      <h3>SmartAgriMart</h3>
+    </div>
+    <div class="update-refresh">
+      <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="monitoring.html">📊 Monitoring</a>
+    <a href="penyiraman.html" class="active">💧 Penyiraman</a>
+    <a href="jadwal.html">📅 Jadwal</a>
+    <a href="riwayat.html">🕓 Riwayat</a>
+    <a href="penjualan.html">🛒 Penjualan</a>
+    <a href="pengaturan.html">⚙️ Pengaturan</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Kontrol Penyiraman -->
+    <div class="card">
+      <div class="card-header">
+        <span>💧 <b>Kontrol Penyiraman</b></span>
+      </div>
+
+      <div class="card-header" style="margin-top:10px;">
+        <span>⚡ <b>Mode Otomatis</b></span>
+      </div>
+
+      <p class="desc">Penyiraman berdasarkan sensor kelembapan</p>
+
+      <!-- Toggle -->
+      <div class="toggle-wrapper">
+        <label class="switch">
+          <input type="checkbox" id="autoToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <hr style="margin:10px 0;">
+      <div class="status-info">
+        <span>Status Penyiraman</span>
+        <span class="badge" id="statusBadge">Tidak Aktif</span>
+      </div>
+    </div>
+
+    <!-- Status Tangki Air -->
+    <div class="card">
+      <div class="card-header">⏱️ <b>Status Tangki Air</b></div>
+      <p><b>Level Air</b></p>
+      <div class="progress">
+        <div class="progress-bar" id="waterLevel"></div>
+      </div>
+      <div class="progress-labels">
+        <span>Kosong</span>
+        <span>Penuh</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    /* ================= FIREBASE CONFIG ================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwM2mZMtBPhsGYlvabfmCzLLhZZdLrpuE",
+      authDomain: "smartagrimart-20670.firebaseapp.com",
+      databaseURL: "https://smartagrimart-20670-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smartagrimart-20670",
+      storageBucket: "smartagrimart-20670.appspot.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    /* ================= TOGGLE AUTO WATER ================= */
+    const toggle = document.getElementById("autoToggle");
+    const badge  = document.getElementById("statusBadge");
+
+    toggle.addEventListener("change", () => {
+      const aktif = toggle.checked;
+
+      badge.textContent = aktif ? "Aktif" : "Tidak Aktif";
+      badge.classList.toggle("active", aktif);
+
+      // Simpan ke Firebase
+      set(ref(db, "controls/autoWater"), aktif);
+    });
+
+    /* ================= BACA STATUS AUTO WATER ================= */
+    onValue(ref(db, "controls/autoWater"), (snap) => {
+      const val = snap.val();
+      if (val !== null) {
+        toggle.checked = val;
+        badge.textContent = val ? "Aktif" : "Tidak Aktif";
+        badge.classList.toggle("active", val);
+      }
+    });
+
+    /* ================= BACA DATA ESP32 ================= */
+    onValue(ref(db, "ESP32/data"), (snapshot) => {
+      if (!snapshot.exists()) return;
+
+      const data = snapshot.val();
+      const moisture = Number(data.moisture ?? 0);
+      const pump     = data.pump === true;
+
+      /* Level Air Tangki (dipetakan dari moisture) */
+      document.getElementById("waterLevel").style.width = moisture + "%";
+
+      /* Status pompa sinkron */
+      badge.textContent = pump ? "Aktif" : "Tidak Aktif";
+      badge.classList.toggle("active", pump);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartAgriMart - Riwayat Penyiraman</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="riwayat.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌱</div>
+      <h3>SmartAgriMart</h3>
+    </div>
+    <div class="update-refresh">
+      <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="monitoring.html">📊 Monitoring</a>
+    <a href="penyiraman.html">💧 Penyiraman</a>
+    <a href="jadwal.html">📅 Jadwal</a>
+    <a href="riwayat.html" class="active">🕓 Riwayat</a>
+    <a href="penjualan.html">🛒 Penjualan</a>
+    <a href="pengaturan.html">⚙️ Pengaturan</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="container">
+    <!-- Baris 1 -->
+    <div class="row">
+      <div class="card">
+        <div class="card-header">💧 Penggunaan Hari Ini</div>
+        <div class="card-value" id="todayUsage">0.0L</div>
+        <div class="card-sub">0 kali penyiraman</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">📈 Rata-rata Minggu Ini</div>
+        <div class="card-value" id="weeklyAverage">0.0L</div>
+        <div class="card-sub">per hari</div>
+      </div>
+    </div>
+
+    <!-- Baris 2: Grafik -->
+    <div class="card">
+      <div class="card-header">📅 Penggunaan Air Mingguan</div>
+      <div class="chart-area">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Baris 3: Tabel Riwayat -->
+    <div class="card">
+      <div class="card-header">🕒 Riwayat Penyiraman</div>
+      <div id="historyContent" class="empty-message">💧 Belum Ada Riwayat Penyiraman...</div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+/* ======================================================
+   SMARTAGRIMART - RIWAYAT PENYIRAMAN (FINAL)
+   ====================================================== */
+
+const historyContainer = document.getElementById("historyContent");
+const todayUsage = document.getElementById("todayUsage");
+const weeklyAverage = document.getElementById("weeklyAverage");
+const todaySub = document.querySelector(".card-sub");
+
+// ---------- UTIL ----------
+function getDateObj(record) {
+  if (record.createdAt?.toDate) return record.createdAt.toDate();
+  if (record.time) return new Date(record.time);
+  return null;
+}
+
+function formatDateTime(d) {
+  return d ? d.toLocaleString("id-ID") : "-";
+}
+
+// ---------- RENDER ----------
+function renderHistory(historyData) {
+  if (!historyData || historyData.length === 0) {
+    historyContainer.innerHTML =
+      `<div class="empty-message">💧 Belum Ada Riwayat Penyiraman...</div>`;
+    todayUsage.textContent = "0.0L";
+    weeklyAverage.textContent = "0.0L";
+    todaySub.textContent = "0 kali penyiraman";
+    return;
+  }
+
+  const now = new Date();
+  const todayKey = now.toISOString().slice(0,10);
+
+  // ---- FILTER HARI INI ----
+  const todayRecords = historyData.filter(r => {
+    const d = getDateObj(r);
+    return d && d.toISOString().slice(0,10) === todayKey;
+  });
+
+  const totalToday = todayRecords.reduce(
+    (s, r) => s + Number(r.volume || 0), 0
+  );
+
+  todayUsage.textContent = totalToday.toFixed(1) + "L";
+  todaySub.textContent = todayRecords.length + " kali penyiraman";
+
+  // ---- FILTER 7 HARI TERAKHIR ----
+  const weekAgo = new Date();
+  weekAgo.setDate(now.getDate() - 6);
+
+  const weekRecords = historyData.filter(r => {
+    const d = getDateObj(r);
+    return d && d >= weekAgo && d <= now;
+  });
+
+  const totalWeek = weekRecords.reduce(
+    (s, r) => s + Number(r.volume || 0), 0
+  );
+
+  const activeDays = new Set(
+    weekRecords.map(r =>
+      getDateObj(r).toISOString().slice(0,10)
+    )
+  ).size || 1;
+
+  weeklyAverage.textContent =
+    (totalWeek / activeDays).toFixed(1) + "L";
+
+  // ---- TABEL RIWAYAT ----
+  let tableHTML = `
+    <div style="overflow-x:auto;">
+    <table class="history-table">
+      <tr>
+        <th>No</th>
+        <th>Waktu</th>
+        <th>Durasi (menit)</th>
+        <th>Volume (L)</th>
+        <th>Status</th>
+      </tr>`;
+
+  historyData.forEach((item, i) => {
+    tableHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${formatDateTime(getDateObj(item))}</td>
+        <td>${item.duration || "-"}</td>
+        <td>${item.volume || 0}</td>
+        <td>${item.status || "Berhasil"}</td>
+      </tr>`;
+  });
+
+  tableHTML += "</table></div>";
+  historyContainer.innerHTML = tableHTML;
+
+  // ---- GRAFIK MINGGUAN ----
+  const dailyMap = {};
+  weekRecords.forEach(r => {
+    const key = getDateObj(r).toISOString().slice(0,10);
+    dailyMap[key] = (dailyMap[key] || 0) + Number(r.volume || 0);
+  });
+
+  const labels = [];
+  const data = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(now.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    labels.push(d.toLocaleDateString("id-ID", { weekday: "short" }));
+    data.push(dailyMap[key] || 0);
+  }
+
+  const ctx = document.getElementById("weeklyChart").getContext("2d");
+  if (window.weeklyChart) window.weeklyChart.destroy();
+
+  window.weeklyChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Volume Air (L)",
+        data,
+        backgroundColor: "#2ecc71aa",
+        borderColor: "#27ae60",
+        borderWidth: 1.5,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "Liter" } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ---------- LOAD DATA ----------
+SAMAuth.onAuthStateChanged(user => {
+  if (user && window.FireBaseApp && window.FireBaseApp.db) {
+    window.FireBaseApp.db
+      .collection("wateringHistory")
+      .where("farmerId", "==", user.uid)
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderHistory(rows);
+      });
+  } else {
+    // fallback lokal
+    const localData = JSON.parse(localStorage.getItem("wateringHistory")) || [];
+    renderHistory(localData);
+  }
+});
+</script>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartAgriMart - Pengaturan</title>
+  <link rel="stylesheet" href="pengaturan.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌱</div>
+      <h3>SmartAgriMart</h3>
+    </div>
+    <div class="update-refresh">
+      <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="monitoring.html">📊 Monitoring</a>
+    <a href="penyiraman.html">💧 Penyiraman</a>
+    <a href="jadwal.html">📅 Jadwal</a>
+    <a href="riwayat.html" >🕓 Riwayat</a>
+    <a href="penjualan.html">🛒 Penjualan</a>
+    <a href="pengaturan.html"class="active">⚙️ Pengaturan</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="container">
+
+    <div class="section">
+      <h4>🌿 Profil Tanaman</h4>
+      <label>Jenis Tanaman</label>
+      <select>
+        <option>Sayuran</option>
+        <option>Buah</option>
+        <option>Tanaman Hias</option>
+      </select>
+
+      <div class="row">
+        <div>
+          <label>Kelembapan Optimal (%)</label>
+          <input type="number" value="0">
+        </div>
+        <div>
+          <label>Suhu Optimal (°C)</label>
+          <input type="number" value="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h4>🔔 Notifikasi</h4>
+      <div class="notif-item">
+        <span>Air Tangki Rendah</span>
+        <div class="toggle"></div>
+      </div>
+      <div class="notif-item">
+        <span>Penyiraman Selesai</span>
+        <div class="toggle"></div>
+      </div>
+      <div class="notif-item">
+        <span>Peringatan Sensor</span>
+        <div class="toggle"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h4>📡 Pengaturan Jaringan</h4>
+      <label>Nama Perangkat</label>
+      <input type="text" placeholder="-">
+      <label>WiFi SSID</label>
+      <input type="text" placeholder="-">
+      <label>API Endpoint</label>
+      <input type="text" placeholder="-">
+    </div>
+
+    <div class="section">
+      <h4>🌡️ Kalibrasi Sensor</h4>
+      <label>Interval Pembacaan (detik)</label>
+      <input type="number" value="0">
+      <div class="row">
+        <div>
+          <label>Offset Suhu (°C)</label>
+          <input type="number" value="0">
+        </div>
+        <div>
+          <label>Offset Kelembapan (%)</label>
+          <input type="number" value="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="logout">
+      <a href="#" onclick="openLogoutModal()">⇦ Logout</a>
+    </div>
+  </div>
+
+  <!-- MODAL LOGOUT -->
+  <div class="modal-overlay" id="logoutModal">
+    <div class="modal">
+      <h3>Konfirmasi Logout</h3>
+      <p>Apakah Anda yakin ingin keluar dari SmartAgriMart?</p>
+      <button class="btn-yes" onclick="confirmLogout()">Ya</button>
+      <button class="btn-no" onclick="closeLogoutModal()">Tidak</button>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+
+<script>
+/* ======================================================
+   PENGATURAN → FIREBASE (REALTIME)
+   ====================================================== */
+
+const plantSelect = document.querySelector("select");
+const humidityInput = document.querySelectorAll("input[type=number]")[0];
+const tempInput = document.querySelectorAll("input[type=number]")[1];
+const intervalInput = document.querySelectorAll("input[type=number]")[2];
+const humidityOffsetInput = document.querySelectorAll("input[type=number]")[3];
+const tempOffsetInput = document.querySelectorAll("input[type=number]")[4];
+
+function saveSettings() {
+  if (!window.FireBaseApp || !window.FireBaseApp.rtdb) return;
+
+  const rtdb = window.FireBaseApp.rtdb;
+
+  rtdb.ref("settings").set({
+    plantType: plantSelect.value,
+    humidity: {
+      min: Number(humidityInput.value),
+      max: Number(humidityInput.value) + 30
+    },
+    temperature: {
+      min: Number(tempInput.value),
+      max: Number(tempInput.value) + 8
+    },
+    readInterval: Number(intervalInput.value),
+    calibration: {
+      humidityOffset: Number(humidityOffsetInput.value),
+      tempOffset: Number(tempOffsetInput.value)
+    }
+  });
+}
+
+// auto-save setiap perubahan
+document.querySelectorAll("input, select").forEach(el => {
+  el.addEventListener("change", saveSettings);
+});
+
+// load data dari Firebase
+if (window.FireBaseApp && window.FireBaseApp.rtdb) {
+  window.FireBaseApp.rtdb.ref("settings").on("value", snap => {
+    if (!snap.exists()) return;
+    const d = snap.val();
+    plantSelect.value = d.plantType || "Sayuran";
+    humidityInput.value = d.humidity?.min ?? 40;
+    tempInput.value = d.temperature?.min ?? 25;
+    intervalInput.value = d.readInterval ?? 5;
+    humidityOffsetInput.value = d.calibration?.humidityOffset ?? 0;
+    tempOffsetInput.value = d.calibration?.tempOffset ?? 0;
+  });
+}
+/* ======================================================
+   LOGOUT MODAL HANDLER
+   ====================================================== */
+
+const logoutModal = document.getElementById("logoutModal");
+
+function openLogoutModal() {
+  logoutModal.style.display = "flex";
+}
+
+function closeLogoutModal() {
+  logoutModal.style.display = "none";
+}
+
+function confirmLogout() {
+  // jika pakai Firebase Auth
+  if (window.FireBaseApp && window.FireBaseApp.auth) {
+    window.FireBaseApp.auth.signOut().then(() => {
+      window.location.href = "login.html";
+    });
+  } else {
+    // fallback
+    window.location.href = "login.html";
+  }
+}
+</script>
+</body>
+</html>

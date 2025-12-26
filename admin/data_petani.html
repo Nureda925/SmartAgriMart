@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Petani - SmartAgriMart</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="data_petani.css">
+</head>
+<body>
+
+<div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:9999;">
+    <h3>Memeriksa Akses...</h3>
+</div>
+
+<div class="header-top" style="display:none;" id="mainHeader">
+  <div class="header-left">
+    <div class="logo-icon">🌱</div>
+    <div class="logo-text">
+      <h2>SmartAgriMart</h2>
+      <span>Portal Admin</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="#" onclick="openLogoutPopup()">Logout</a>
+  </div>
+</div>
+
+<div class="container" style="display:none;" id="mainContainer">
+
+  <div class="sidebar">
+    <div class="menu">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="data_petani.html" class="active">Data Petani</a>
+      <a href="produk_tertunda.html">Produk Tertunda</a>
+      <a href="produk_disetujui.html">Produk Disetujui</a>
+      <a href="pengaturan_akun.html">Pengaturan Akun</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1>Data Petani</h1>
+    <small>Kelola semua petani yang terdaftar</small><br><br>
+
+    <button class="btn-tambah" onclick="openAddModal()">
+      <span>+</span> Tambah Petani
+    </button>
+
+    <div class="data-box">
+      <table>
+        <thead>
+          <tr>
+            <th>ID Petani</th>
+            <th>Nama</th>
+            <th>Kontak</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelPetani">
+          <tr><td colspan="5">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="logoutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Konfirmasi Logout</h3>
+    <p>Apakah Anda yakin ingin keluar dari sistem?</p>
+    <div class="modal-btn-group">
+      <button class="btn-modal btn-cancel" onclick="closeLogoutPopup()">Batal</button>
+      <button class="btn-modal btn-confirm" onclick="confirmLogout()">Ya, Logout</button>
+    </div>
+  </div>
+</div>
+
+<div id="addModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Tambah Petani Baru</h3>
+    
+    <div class="form-group">
+      <label>Nama Lengkap</label>
+      <input type="text" id="inputNama" class="form-input" placeholder="Masukkan nama petani...">
+    </div>
+
+    <div class="form-group">
+      <label>Nomor HP / Kontak</label>
+      <input type="number" id="inputKontak" class="form-input" placeholder="Contoh: 0812...">
+    </div>
+
+    <div class="modal-btn-group">
+      <button class="btn-modal btn-cancel" onclick="closeAddModal()">Batal</button>
+      <button class="btn-modal btn-save" onclick="simpanPetani()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script> <script>
+// ================= PROTEKSI ADMIN (BARU & AMAN) =================
+SAMAuth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "login_admin.html";
+        return;
+    }
+
+    const profile = await SAMRoles.getUserProfile(user.uid);
+    const userRole = profile ? String(profile.role).trim().toLowerCase() : '';
+
+    if (userRole !== 'admin') {
+        alert("Akses Ditolak.");
+        await SAMAuth.signOut();
+        window.location.href = "login_admin.html";
+        return;
+    }
+
+    // JIka Lolos, Tampilkan Konten & Load Data
+    document.getElementById("loadingOverlay").style.display = "none";
+    document.getElementById("mainHeader").style.display = "flex";
+    document.getElementById("mainContainer").style.display = "flex";
+    
+    loadPetani(); // Load data hanya setelah login terkonfirmasi
+});
+
+// ================= LOGOUT LOGIC (DIPERBAIKI) =================
+function openLogoutPopup() {
+  document.getElementById("logoutModal").style.display = "flex";
+}
+function closeLogoutPopup() {
+  document.getElementById("logoutModal").style.display = "none";
+}
+async function confirmLogout() {
+  await SAMAuth.signOut(); // Logout dari Firebase
+  localStorage.clear();
+  window.location.href = "login_admin.html";
+}
+
+// ================= TAMBAH PETANI LOGIC =================
+function openAddModal() {
+  document.getElementById('inputNama').value = '';
+  document.getElementById('inputKontak').value = '';
+  document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('inputNama').focus();
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+
+async function simpanPetani() {
+  const nama = document.getElementById('inputNama').value;
+  const kontak = document.getElementById('inputKontak').value;
+
+  if (!nama) {
+    alert("Nama petani wajib diisi!");
+    return;
+  }
+
+  const id = "PTN_" + Date.now();
+  const data = {
+    id_petani: id,
+    nama: nama,
+    kontak: kontak || "-", 
+    status: "Active"
+  };
+
+  try {
+    // Pastikan menggunakan rtdb (sesuai config Anda)
+    await FireBaseApp.rtdb.ref("petani/" + id).set(data);
+    closeAddModal();
+    loadPetani();
+  } catch (error) {
+    console.error(error);
+    alert("Gagal menyimpan data.");
+  }
+}
+
+// ================= GLOBAL EVENT =================
+window.onclick = function(event) {
+  const logoutModal = document.getElementById("logoutModal");
+  const addModal = document.getElementById("addModal");
+  if (event.target == logoutModal) logoutModal.style.display = "none";
+  if (event.target == addModal) addModal.style.display = "none";
+}
+
+// ================= LOAD DATA =================
+async function loadPetani() {
+  const tbody = document.getElementById("tabelPetani");
+  tbody.innerHTML = "";
+  
+  // Menggunakan rtdb sesuai config Anda
+  const snap = await FireBaseApp.rtdb.ref("petani").once("value");
+
+  if (!snap.exists()) {
+    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Belum ada data petani</td></tr>";
+    return;
+  }
+
+  snap.forEach(child => {
+    const p = child.val();
+    const statusClass = p.status === "Active" ? "active" : "nonactive";
+    const btnText = p.status === "Active" ? "Nonaktifkan" : "Aktifkan";
+    // Warna tombol dinamis
+    const btnStyle = p.status === "Active" ? "background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" : "background:#2ecc71; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${p.id_petani}</td>
+        <td>${p.nama}</td>
+        <td>${p.kontak}</td>
+        <td><span class="status ${statusClass}">${p.status}</span></td>
+        <td>
+          <button style="${btnStyle}" onclick="toggleStatus('${p.id_petani}', '${p.status}')">
+            ${btnText}
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// ================= TOGGLE STATUS =================
+async function toggleStatus(id, status) {
+  const newStatus = status === "Active" ? "Nonaktif" : "Active";
+  await FireBaseApp.rtdb.ref("petani/" + id + "/status").set(newStatus);
+  loadPetani();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil | SmartAgriMart</title>
+<link rel="stylesheet" href="profile.css"> 
+</head>
+<body>
+
+<nav>
+  <div class="logo-container">
+    <div class="logo-box">🌱</div>
+    <span class="logo-text">SmartAgriMart</span>
+  </div>
+
+  <ul>
+    <li><a href="home.html">Home</a></li>
+    <li><a href="produk.html">Produk</a></li>
+    <li><a href="profile.html" class="active">Profil</a></li>
+  </ul>
+
+  <div class="icons">
+    <a href="keranjang.html" class="cart-icon">
+      🛒 <span id="cart-count" class="cart-badge">0</span>
+    </a>
+    <a href="profile.html" class="user-icon">👤</a>
+  </div>
+</nav>
+
+<div class="page-title">
+  <h2>Profil Saya</h2>
+  <p>Kelola profil Anda dan lacak pesanan Anda</p>
+</div>
+
+<div class="profile-container">
+  
+  <div class="profile-sidebar">
+    <img id="fotoProfil" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Profile">
+    
+    <div class="camera-icon" id="cameraBtn">📷</div>
+    
+    <input type="file" id="inputGaleri" accept="image/*" style="display: none;">
+    <input type="file" id="inputKamera" accept="image/*" capture="environment" style="display:none;">
+    
+    <div class="stat" id="tanggalBergabung">📅 Bergabung...</div>
+  </div>
+
+  <div class="profile-main">
+    <div class="tab-menu">
+      <div class="tab active" id="tabProfil">👤 Profil</div>
+      <div class="tab" id="tabPesanan">📦 Pesanan</div>
+    </div>
+
+    <div id="profilSection" class="section active">
+      <button class="edit-btn" id="editBtn">✏️ Edit</button>
+      <h2>Informasi Pribadi</h2>
+      
+      <div class="info-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="nama" disabled>
+      </div>
+      
+      <div class="info-group">
+        <label>Email</label>
+        <input type="email" id="email" disabled>
+      </div>
+      
+      <div class="info-group">
+        <label>No. Handphone</label>
+        <input type="text" id="phone" disabled>
+      </div>
+      
+      <div class="info-group password-wrapper">
+        <label>Kata Sandi</label>
+        <div>
+            <input type="password" id="password" disabled style="padding-right: 45px;">
+            <span class="toggle-password" id="togglePw">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c2.347 0 4.515-.758 6.22-2.07"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </span>
+        </div>
+      </div>
+
+      <div class="logout-container">
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+
+    <div id="pesananSection" class="section">
+      <h2>Pesanan Saya</h2>
+      <div id="pesananContainer" class="pesanan-wrapper">
+        <p>Memuat riwayat pesanan...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="popupFotoAction">
+  <div class="popup-content" style="width: 300px;">
+    <h3 id="judulPopupFoto" style="margin-bottom: 15px; font-size: 16px;">Ubah Foto</h3>
+    
+    <div id="btnContainer" class="popup-options"></div>
+
+    <div style="margin-top: 10px;">
+      <button class="btn-batal" onclick="document.getElementById('popupFotoAction').style.display='none'">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="popupLogout">
+  <div class="logout-popup">
+    <p>Apakah Anda yakin ingin logout?</p>
+    <div class="popup-buttons">
+      <button class="btn-ya" id="confirmLogout">Ya</button>
+      <button class="btn-batal" id="cancelLogout">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+<script src="profile.js"></script>
+</body>
+</html>

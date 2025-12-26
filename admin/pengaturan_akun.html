@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengaturan Akun | SmartAgriMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="pengaturan_akun.css">
+</head>
+<body>
+
+  <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:9999;">
+    <h3>Memuat Data Profil...</h3>
+  </div>
+
+  <div class="header-top">
+    <div class="header-left">
+      <div class="logo-icon">🌱</div>
+      <div class="logo-text">
+        <h2>SmartAgriMart</h2>
+        <span>Portal Admin</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="#" onclick="openLogoutPopup()">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div class="menu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="data_petani.html">Data Petani</a>
+        <a href="produk_tertunda.html">Produk Tertunda</a>
+        <a href="produk_disetujui.html"> Produk Disetujui</a>
+        <a href="pengaturan_akun.html" class="active">Pengaturan Akun</a>
+      </div>
+    </div>
+
+    <div class="main">
+      <h2>Pengaturan Akun</h2>
+      <p>Kelola preferensi dan keamanan akun Anda.</p>
+
+      <div class="card">
+        <h3>Informasi Profil</h3>
+        <p>Perbarui informasi pribadi Anda.</p>
+
+        <div class="profile-photo">
+          <div class="avatar" id="avatarBox" style="width: 80px; height: 80px; background-color: #16a34a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold;">
+            A
+          </div>
+        </div>
+
+        <hr style="margin-bottom: 15px;">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="namaLengkap" placeholder="Memuat...">
+          </div>
+          <div class="form-group">
+            <label>Alamat Email (Tidak dapat diubah)</label>
+            <input type="email" id="email" placeholder="Memuat..." readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+          </div>
+          <div class="form-group">
+            <label>No.Handphone</label>
+            <input type="text" id="noHp" placeholder="Memuat...">
+          </div>
+          <div class="form-group">
+            <label>Peran</label>
+            <input type="text" id="peran" class="readonly" placeholder="Memuat..." readonly>
+          </div>
+        </div>
+
+        <button class="btn-green" onclick="updateProfile()">Simpan Perubahan</button>
+      </div>
+
+      <div class="card">
+        <h3>Keamanan</h3>
+        <p>Perbarui kata sandi Anda untuk menjaga keamanan akun Anda.</p>
+
+        <div class="form-grid" style="margin-top: 10px;">
+          <div class="form-group">
+            <label>Kata Sandi Baru</label>
+            <input type="password" id="sandiBaru" placeholder="Masukkan sandi baru">
+          </div>
+          <div class="form-group">
+            <label>Konfirmasi Kata Sandi Baru</label>
+            <input type="password" id="konfirmasiSandi" placeholder="Ulangi sandi baru">
+          </div>
+        </div>
+
+        <p class="note">
+          Kata sandi harus terdiri dari minimal 6 karakter.
+        </p>
+
+        <button class="btn-green" onclick="updatePassword()">Ubah Kata Sandi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="logoutModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Konfirmasi Logout</h3>
+      <p>Apakah Anda yakin ingin keluar dari sistem?</p>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeLogoutPopup()">Batal</button>
+        <button class="btn-confirm" onclick="confirmLogout()">Ya, Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <script>
+    let currentUserUid = null;
+
+    // 1. CEK LOGIN & AMBIL DATA OTOMATIS
+    SAMAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "login_admin.html";
+        return;
+      }
+
+      currentUserUid = user.uid;
+      
+      const profile = await SAMRoles.getUserProfile(user.uid);
+
+      if (profile) {
+        let displayName = profile.name || profile.nama;
+        if (!displayName) {
+            const emailName = user.email.split('@')[0];
+            displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        }
+
+        document.getElementById('namaLengkap').value = displayName;
+        document.getElementById('email').value = profile.email || user.email;
+        document.getElementById('noHp').value = profile.phone || profile.noHp || '';
+        document.getElementById('peran').value = profile.role || 'Admin';
+
+        document.getElementById('avatarBox').innerText = displayName.charAt(0).toUpperCase();
+        document.getElementById('loadingOverlay').style.display = 'none';
+      } else {
+        alert("Data profil tidak ditemukan.");
+      }
+    });
+
+    // 2. FUNGSI SIMPAN PERUBAHAN PROFIL
+    async function updateProfile() {
+      if(!currentUserUid) return;
+
+      const newName = document.getElementById('namaLengkap').value;
+      const newPhone = document.getElementById('noHp').value;
+
+      if(newName.trim() === "") {
+        alert("Nama tidak boleh kosong.");
+        return;
+      }
+
+      const updateData = {
+        name: newName,
+        phone: newPhone
+      };
+
+      try {
+        await SAMRoles.updateUserProfile(currentUserUid, updateData);
+        alert("Profil berhasil diperbarui!");
+        document.getElementById('avatarBox').innerText = newName.charAt(0).toUpperCase();
+      } catch (error) {
+        console.error(error);
+        alert("Gagal memperbarui profil: " + error.message);
+      }
+    }
+
+    // 3. FUNGSI UBAH PASSWORD
+    async function updatePassword() {
+      const p1 = document.getElementById('sandiBaru').value;
+      const p2 = document.getElementById('konfirmasiSandi').value;
+
+      if (p1.length < 6) {
+        alert("Password minimal 6 karakter.");
+        return;
+      }
+
+      if (p1 !== p2) {
+        alert("Konfirmasi password tidak cocok.");
+        return;
+      }
+
+      const user = SAMAuth.getCurrentUser();
+      if(user) {
+        try {
+          await user.updatePassword(p1);
+          alert("Password berhasil diubah! Silakan login ulang.");
+          await SAMAuth.signOut();
+          window.location.href = "login_admin.html";
+        } catch (error) {
+          alert("Gagal mengubah password: " + error.message);
+        }
+      }
+    }
+
+    // =======================================================
+    // LOGIKA POPUP LOGOUT (SUDAH DIPERBAIKI)
+    // =======================================================
+
+    function openLogoutPopup() {
+      // Pastikan elemen ada sebelum mengubah style
+      const modal = document.getElementById("logoutModal");
+      if(modal) {
+        modal.style.display = "flex";
+      } else {
+        console.error("Modal tidak ditemukan!");
+      }
+    }
+
+    function closeLogoutPopup() {
+      document.getElementById("logoutModal").style.display = "none";
+    }
+
+    async function confirmLogout() {
+      try {
+        await SAMAuth.signOut();
+        localStorage.clear();
+        window.location.href = 'login_admin.html';
+      } catch (err) { 
+        console.error("Logout Error:", err);
+        alert("Gagal logout. Silakan coba lagi.");
+      }
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("logoutModal");
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>

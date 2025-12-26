@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartAgriMart - Home</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+<nav>
+  <div class="logo-container">
+    <div class="logo-box">🌱</div>
+    <span class="logo-text">SmartAgriMart</span>
+  </div>
+
+  <ul>
+    <li><a href="home.html" class="active">Home</a></li>
+    <li><a href="produk.html">Produk</a></li>
+    <li><a href="#" onclick="checkProfileAccess(event)">Profil</a></li>
+  </ul>
+
+  <div class="icons">
+    <a href="#" onclick="checkCartAccess(event)">
+      🛒 <span id="cart-count" class="cart-badge">0</span>
+    </a>
+
+    <a href="#" onclick="checkProfileAccess(event)">👤</a>
+    
+    <a href="login_pembeli.html" id="btn-login-text" style="font-size: 14px; font-weight: bold; text-decoration: none; margin-left: 10px;">Login</a>
+  </div>
+</nav>
+
+  <section class="hero">
+    <div class="overlay"></div>
+    <div class="hero-content">
+      <div class="tag">100% Organic & Fresh</div>
+      <h1>Dari Hasil Panen Terbaik Untuk Anda</h1>
+      <h3>Sawi Hijau Segar Setiap Hari</h3>
+      <p>Nikmati kesegaran daun sawi segar yang dipetik langsung dari kebun dan dikirim langsung ke rumah Anda.</p>
+      <div class="buttons">
+        <button class="btn btn-primary" onclick="window.location.href='produk.html'">Beli Sekarang</button>
+        <button class="btn btn-outline" onclick="window.location.href='Contact Person.html'">Hubungi Kami</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2>Mengapa Memilih SmartAgriMart?</h2>
+    <p>Kami berkomitmen untuk menyediakan daun sawi segar dan sehat langsung dari kebun organik kami.</p>
+    <div class="feature-grid">
+      <div class="feature-item"><i>🌿</i><h3>Segar dari Kebun</h3><p>Dihasilkan setiap hari dari kebun organik kami.</p></div>
+      <div class="feature-item"><i>🚚</i><h3>Tanpa Pesticida</h3><p>Metode alami tanpa bahan kimia berbahaya.</p></div>
+      <div class="feature-item"><i>🏅</i><h3>Kualitas Premium</h3><p>Dipilih dan diperiksa manual untuk kualitas.</p></div>
+      <div class="feature-item"><i>💚</i><h3>Dukung Petani Lokal</h3><p>Membantu petani lokal meningkatkan hasil.</p></div>
+    </div>
+  </section>
+
+  <section class="why-section">
+    <img src="sawi1.jpeg" alt="Sawi Hijau">
+    <div class="why-text">
+      <h3>Kami Memberikan Yang Terbaik untuk Anda</h3>
+      <ul>
+        <li>Segar dari kebun dalam 24 jam</li>
+        <li>100% organik dan bebas pestisida</li>
+        <li>Mendukung petani lokal</li>
+        <li>Bergizi dan kaya vitamin</li>
+        <li>Kemasan ramah lingkungan</li>
+      </ul>
+      <button class="btn-green" onclick="window.location.href='produk.html'">Jelajahi Produk</button>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Siap Menikmati Sayuran Segar dari Perkebunan?</h2>
+    <p>Mulailah perjalanan Anda menuju pola makan yang lebih sehat. Segar, organik, dan diantar langsung ke rumah Anda.</p>
+    <button onclick="window.location.href='produk.html'">Mulai Berbelanja</button>
+  </section>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <script>
+    let isUserLoggedIn = false;
+
+    // ===========================
+    // 1. CEK STATUS LOGIN (REALTIME)
+    // ===========================
+    function checkAuthStatus() {
+        const check = setInterval(() => {
+            if (window.FireBaseApp && window.FireBaseApp.auth) {
+                clearInterval(check);
+                
+                window.FireBaseApp.auth.onAuthStateChanged((user) => {
+                    const btnLoginText = document.getElementById('btn-login-text');
+                    
+                    if (user) {
+                        // USER SUDAH LOGIN
+                        isUserLoggedIn = true;
+                        // Sembunyikan teks "Login" karena sudah ada ikon user
+                        if(btnLoginText) btnLoginText.style.display = 'none';
+                        
+                        updateCartBadge();
+                    } else {
+                        // USER BELUM LOGIN (TAMU)
+                        isUserLoggedIn = false;
+                        // Tampilkan teks "Login" untuk memudahkan
+                        if(btnLoginText) btnLoginText.style.display = 'inline-block';
+                        
+                        updateCartBadge();
+                    }
+                });
+            }
+        }, 100);
+    }
+
+    // ===========================
+    // 2. PROTEKSI KERANJANG
+    // ===========================
+    function checkCartAccess(event) {
+        event.preventDefault(); 
+        if (isUserLoggedIn) {
+            window.location.href = 'keranjang.html';
+        } else {
+            alert("Silakan Login terlebih dahulu untuk melihat keranjang.");
+            window.location.href = 'login_pembeli.html';
+        }
+    }
+
+    // ===========================
+    // 3. PROTEKSI PROFIL (BARU)
+    // ===========================
+    function checkProfileAccess(event) {
+        event.preventDefault();
+        if (isUserLoggedIn) {
+            // Jika sudah login, boleh masuk ke profil
+            window.location.href = 'profile.html';
+        } else {
+            // Jika belum, lempar ke halaman login
+            if(confirm("Anda harus login untuk mengakses Profil. Menuju halaman Login?")) {
+                window.location.href = 'login_pembeli.html';
+            }
+        }
+    }
+
+    // ===========================
+    // 4. BADGE KERANJANG
+    // ===========================
+    function updateCartBadge() {
+      const badge = document.getElementById('cart-count');
+      const pesanan = JSON.parse(localStorage.getItem("pesanan")) || [];
+      const totalQty = pesanan.reduce((total, item) => total + (item.jumlah || 1), 0);
+
+      if (totalQty > 0) {
+        badge.textContent = totalQty;
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        checkAuthStatus();
+    });
+  </script>
+
+</body>
+</html>

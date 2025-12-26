@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartAgriMart - Jadwal Penyiraman</title>
+  <link rel="stylesheet" href="jadwal.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌱</div>
+      <h3>SmartAgriMart</h3>
+    </div>
+    <div class="update-refresh">
+      <button class="refresh-btn" onclick="location.reload()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="monitoring.html">📊 Monitoring</a>
+    <a href="penyiraman.html">💧 Penyiraman</a>
+    <a href="jadwal.html"class="active">📅 Jadwal</a>
+    <a href="riwayat.html" >🕓 Riwayat</a>
+    <a href="penjualan.html">🛒 Penjualan</a>
+    <a href="pengaturan.html">⚙️ Pengaturan</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="container">
+    <!-- Tambah Jadwal -->
+    <div class="card">
+      <div class="card-header">➕ Tambah Jadwal Penyiraman</div>
+      <div class="form-group">
+        <div>
+          <label>Waktu</label>
+          <input type="time" id="timeInput" value="06:00">
+        </div>
+        <div>
+          <label>Durasi (menit)</label>
+          <select id="durationInput">
+            <option value="">- menit -</option>
+            <option>5</option>
+            <option>10</option>
+            <option>15</option>
+            <option>20</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Hari</label>
+      <div class="days" id="dayButtons">
+        <button class="day-btn">Sen</button>
+        <button class="day-btn">Sel</button>
+        <button class="day-btn">Rab</button>
+        <button class="day-btn">Kam</button>
+        <button class="day-btn">Jum</button>
+        <button class="day-btn">Sab</button>
+        <button class="day-btn">Min</button>
+      </div>
+
+      <button class="add-btn" id="addScheduleBtn">+ Tambah Jadwal</button>
+    </div>
+
+    <!-- Jadwal Aktif -->
+    <div class="card">
+      <div class="card-header">📋 Jadwal Aktif</div>
+      <div class="schedule-list" id="scheduleList"></div>
+    </div>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    const addBtn = document.getElementById("addScheduleBtn");
+    const scheduleList = document.getElementById("scheduleList");
+    const dayButtons = document.querySelectorAll(".day-btn");
+    const timeInput = document.getElementById("timeInput");
+    const durationInput = document.getElementById("durationInput");
+
+    dayButtons.forEach(btn => {
+      btn.addEventListener("click", () => btn.classList.toggle("active"));
+    });
+
+    async function renderSchedulesFromSnapshot(snapshot) {
+      console.log('Rendering schedules:', snapshot.size);
+      scheduleList.innerHTML = '';
+      snapshot.forEach(doc => {
+        console.log('Doc:', doc.id, doc.data());
+        const data = doc.data();
+        const scheduleItem = document.createElement('div');
+        scheduleItem.classList.add('schedule-item');
+        scheduleItem.dataset.id = doc.id;
+        scheduleItem.innerHTML = `
+          <div class="schedule-left">
+            <label class="toggle-switch">
+              <input type="checkbox" ${data.enabled ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+            <span class="schedule-time">${data.time}</span>
+            <span>- ${data.duration} menit</span>
+            <div class="days">
+              ${data.days.map(day => `<button class="day-btn active">${day}</button>`).join(' ')}
+            </div>
+          </div>
+          <button class="delete-btn">🗑️</button>
+        `;
+
+        scheduleList.appendChild(scheduleItem);
+
+        // setup buttons
+        scheduleItem.querySelector('.delete-btn').addEventListener('click', async () => {
+          const id = scheduleItem.dataset.id;
+          if (window.FireBaseApp && window.FireBaseApp.db) {
+            await window.FireBaseApp.db.collection('schedules').doc(id).delete();
+          } else {
+            scheduleItem.remove();
+          }
+        });
+
+        scheduleItem.querySelector('input[type=checkbox]').addEventListener('change', async (e) => {
+          const id = scheduleItem.dataset.id;
+          if (window.FireBaseApp && window.FireBaseApp.db) {
+            await window.FireBaseApp.db.collection('schedules').doc(id).update({ enabled: e.target.checked });
+          }
+        });
+      });
+    }
+
+    addBtn.addEventListener("click", async () => {
+      const selectedDays = Array.from(dayButtons)
+        .filter(btn => btn.classList.contains("active"))
+        .map(btn => btn.textContent);
+
+      const time = timeInput.value;
+      const duration = durationInput.value;
+
+      if (!time || !duration || selectedDays.length === 0) {
+        alert("Lengkapi waktu, durasi, dan pilih minimal satu hari!");
+        return;
+      }
+
+      const scheduleObj = { days: selectedDays, time, duration: parseInt(duration), enabled: true, createdAt: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : new Date() };
+
+      if (window.FireBaseApp && window.FireBaseApp.db && window.FireBaseApp.auth && window.FireBaseApp.auth.currentUser) {
+        const uid = window.FireBaseApp.auth.currentUser.uid;
+        scheduleObj.farmerId = uid;
+        await window.FireBaseApp.db.collection('schedules').add(scheduleObj);
+      } else {
+        // fallback to local DOM
+        const scheduleItem = document.createElement("div");
+        scheduleItem.classList.add("schedule-item");
+        scheduleItem.innerHTML = `
+          <div class="schedule-left">
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="schedule-time">${time}</span>
+            <span>- ${duration} menit</span>
+            <div class="days">
+              ${selectedDays.map(day => `<button class="day-btn active">${day}</button>`).join(' ')}
+            </div>
+          </div>
+          <button class="delete-btn">🗑️</button>
+        `;
+        scheduleList.appendChild(scheduleItem);
+      }
+
+      // Reset inputs
+      timeInput.value = "06:00";
+      durationInput.value = "";
+      dayButtons.forEach(btn => btn.classList.remove("active"));
+    });
+
+    // load schedules when user logged in
+    if (SAMAuth && SAMAuth.onAuthStateChanged) {
+      console.log('Setting up onAuthStateChanged');
+      SAMAuth.onAuthStateChanged(async user => {
+        console.log('Auth state changed, user:', user);
+        if (user && window.FireBaseApp && window.FireBaseApp.db) {
+          console.log('DB available, querying schedules for uid:', user.uid);
+          const q = window.FireBaseApp.db.collection('schedules').where('farmerId', '==', user.uid);
+          // Load initial data
+          const snapshot = await q.get();
+          console.log('Initial query result:', snapshot.size);
+          renderSchedulesFromSnapshot(snapshot);
+          // Listen for updates
+          q.onSnapshot(renderSchedulesFromSnapshot);
+        } else {
+          console.log('User or DB not available');
+        }
+      });
+    } else {
+      console.log('SAMAuth.onAuthStateChanged not available');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background-color: #f5f6f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 60px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 400px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .logo-icon {
+      background-color: #00b341;
+      color: white;
+      font-size: 28px;
+      border-radius: 10px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    button {
+      background-color: #00b341;
+      color: #fff;
+      font-weight: 600;
+      padding: 10px 0;
+      border: none;
+      width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #00a03b;
+    }
+
+    .btn-daftar {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      padding: 12px;
+      background: white;
+      border: 2px solid #28a745;
+      color: #28a745;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .btn-daftar:hover {
+      background: #28a745;
+      color: white;
+    }
+
+    /* CSS RESET & LAYOUT */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4faf4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* --- CONTAINER LOGO KOTAK HIJAU --- */
+        .logo-box {
+            width: 90px;
+            height: 90px;
+            background: #16a34a; /* Warna hijau brand */
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px auto;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+        }
+
+        .logo-emoji {
+            font-size: 55px;
+            line-height: 1;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+        }
+        /* ---------------------------------- */
+
+        h2 { text-align: center; color: #333; margin-bottom: 5px; }
+        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 25px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #555; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        
+        button { 
+            width: 100%; padding: 12px; 
+            background: #16a34a; color: white; 
+            border: none; border-radius: 8px; 
+            cursor: pointer; font-weight: 600; font-size: 16px; 
+            margin-top: 10px; 
+            transition: background 0.3s;
+        }
+        button:hover { background: #15803d; }
+        
+        .links { margin-top: 20px; text-align: center; font-size: 13px; }
+        .links a { color: #16a34a; text-decoration: none; font-weight: 500; }

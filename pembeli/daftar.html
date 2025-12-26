@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Akun - SmartAgriMart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="daftar.css">
+</head>
+<body>
+
+<div class="login-container">
+    
+    <div class="logo-box">
+        <span class="logo-emoji">🌱</span>
+    </div>
+    <h2>Buat Akun Baru</h2>
+    <p>Isi data diri Anda untuk mendaftar</p>
+
+    <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="regNama" placeholder="Nama Anda">
+    </div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="Contoh: elsa@gmail.com">
+    </div>
+
+    <div class="form-group">
+        <label>No. Handphone</label>
+        <input type="tel" id="regPhone" placeholder="Contoh: 08123456789">
+    </div>
+
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Minimal 6 karakter">
+    </div>
+
+    <button id="btnRegister">Daftar Sekarang</button>
+
+    <div class="links">
+        Sudah punya akun? <a href="login_konsumen.html">Login disini</a>
+    </div>
+</div>
+
+<script src="../js/firebase-config.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnRegister = document.getElementById("btnRegister");
+        
+        btnRegister.addEventListener("click", async () => {
+            const nama = document.getElementById("regNama").value;
+            const email = document.getElementById("regEmail").value;
+            const phone = document.getElementById("regPhone").value;
+            const password = document.getElementById("regPassword").value;
+
+            if (!nama || !email || !phone || !password) {
+                alert("Semua kolom wajib diisi!");
+                return;
+            }
+
+            if (password.length < 6) {
+                alert("Password minimal 6 karakter!");
+                return;
+            }
+
+            btnRegister.innerText = "Mendaftarkan...";
+            btnRegister.disabled = true;
+
+            try {
+                // 1. Buat User di Authentication
+                console.log("Mencoba membuat akun auth...");
+                await window.FireBaseApp.auth.createUserWithEmailAndPassword(email, password);
+                
+                // 2. Simpan Data Profil ke Database
+                console.log("Akun auth sukses. Menyimpan ke database...");
+                const timestamp = Date.now();
+                const pmbID = "PMB_" + timestamp; 
+
+                await window.FireBaseApp.rtdb.ref('pembeli/' + pmbID).set({
+                    id_pembeli: pmbID,
+                    nama: nama,
+                    email: email,
+                    telepon: phone,
+                    password: password, 
+                    foto: "",
+                    createdAt: timestamp,
+                    status: "Active"
+                });
+
+                alert("✅ Pendaftaran Berhasil! Silakan Login.");
+                window.location.href = "login_konsumen.html";
+
+            } catch (error) {
+                console.error("Register Gagal:", error);
+                btnRegister.innerText = "Daftar Sekarang";
+                btnRegister.disabled = false;
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    alert("Email sudah terdaftar! Silakan login.");
+                } else if (error.code === 'auth/weak-password') {
+                    alert("Password terlalu lemah (min 6 karakter).");
+                } else {
+                    alert("Gagal Daftar: " + error.message);
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

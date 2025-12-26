@@ -1,0 +1,221 @@
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background-color: #f5f6f7;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 45px;
+      height: 45px;
+      background: #2ecc71;
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+    }
+
+    .refresh-btn {
+      background: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 6px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: 0.2s;
+      margin-top: 5px;
+    }
+
+    .refresh-btn:hover {
+      background: #f0f0f0;
+    }
+
+    /* ===== NAVIGATION ===== */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #f7f7f7;
+      padding: 8px 16px;
+      border-radius: 40px;
+      width: 95%;
+      margin: 15px auto;
+      box-shadow: inset 0 0 2px rgba(0,0,0,0.1);
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: #333;
+      font-size: 14px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      transition: 0.2s;
+    }
+
+    nav a:hover {
+      background: #ebebeb;
+    }
+
+    nav a.active {
+      background: #fff;
+      box-shadow: 0 0 3px rgba(0,0,0,0.15);
+    }
+
+    /* ===== CONTENT ===== */
+    .container {
+      width: 90%;
+      max-width: 1100px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      flex: 1;
+      min-width: 260px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-value {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .chart-area {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      overflow-x: auto;
+    }
+
+    .history-table th, .history-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .history-table th {
+      background: #f0f5f0;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #666;
+      padding: 30px 0;
+      font-size: 14px;
+    }
+
+    /* ===== RESPONSIVE MODE ===== */
+    @media (max-width: 768px) {
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: none;
+        background: transparent;
+      }
+
+      .refresh-btn {
+        background: #fff;
+        border-radius: 12px;
+        width: fit-content;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      /* NAV JADI VERTIKAL */
+      nav {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        max-width: 320px;
+        background: transparent;
+        box-shadow: none;
+        margin-top: 15px;
+      }
+
+      nav a {
+        background: #fff;
+        width: 80%;
+        justify-content: center;
+        padding: 10px 0;
+        border-radius: 30px;
+        font-size: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      nav a.active {
+        background: #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      }
+    }
